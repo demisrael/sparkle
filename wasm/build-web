@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+    echo "building wasm32-sdk"
+    wasm-pack build --weak-refs --target web --out-name kaspa --out-dir web/kaspa --features wasm32-sdk

@@ -1,0 +1,179 @@
+use crate::id::Id;
+use borsh::{BorshDeserialize, BorshSerialize};
+use kaspa_utils::{
+    hex::{FromHex, ToHex},
+    serde_impl_deser_fixed_bytes_ref, serde_impl_ser_fixed_bytes_ref,
+};
+use sha2::Digest;
+use std::{
+    array::TryFromSliceError,
+    fmt::{Debug, Display, Formatter},
+    str::{self, FromStr},
+};
+
+pub const HASH_SIZE: usize = 32;
+
+#[derive(
+    Eq, Clone, Copy, Default, Hash, PartialEq, PartialOrd, Ord, BorshSerialize, BorshDeserialize,
+)]
+pub struct Hash([u8; HASH_SIZE]);
+
+serde_impl_ser_fixed_bytes_ref!(Hash, HASH_SIZE);
+serde_impl_deser_fixed_bytes_ref!(Hash, HASH_SIZE);
+
+impl From<[u8; HASH_SIZE]> for Hash {
+    fn from(value: [u8; HASH_SIZE]) -> Self {
+        Hash(value)
+    }
+}
+
+impl TryFrom<&[u8]> for Hash {
+    type Error = TryFromSliceError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Hash::try_from_slice(value)
+    }
+}
+
+impl From<Hash> for Id {
+    fn from(hash: Hash) -> Self {
+        Id(hash.0)
+    }
+}
+
+impl From<&Hash> for Id {
+    fn from(hash: &Hash) -> Self {
+        Id(hash.0)
+    }
+}
+
+impl From<Id> for Hash {
+    fn from(id: Id) -> Self {
+        Hash(id.0)
+    }
+}
+
+impl From<&Id> for Hash {
+    fn from(id: &Id) -> Self {
+        Hash(id.0)
+    }
+}
+
+impl Hash {
+    #[inline(always)]
+    pub const fn from_bytes(bytes: [u8; HASH_SIZE]) -> Self {
+        Hash(bytes)
+    }
+
+    #[inline(always)]
+    pub const fn as_bytes(self) -> [u8; 32] {
+        self.0
+    }
+
+    #[inline(always)]
+    pub fn from_slice(bytes: &[u8]) -> Self {
+        Self(<[u8; HASH_SIZE]>::try_from(bytes).expect("Slice must have the length of Hash"))
+    }
+
+    #[inline(always)]
+    pub fn try_from_slice(bytes: &[u8]) -> Result<Self, TryFromSliceError> {
+        Ok(Self(<[u8; HASH_SIZE]>::try_from(bytes)?))
+    }
+
+    pub fn sha256(data: impl AsRef<[u8]>) -> Self {
+        let hash = sha2::Sha256::digest(data);
+        Self::from_slice(hash.as_slice())
+    }
+
+    pub fn sha256d(data: impl AsRef<[u8]>) -> Self {
+        let sha256 = sha2::Sha256::digest(data);
+        let sha256d = sha2::Sha256::digest(sha256.as_slice());
+        Self::from_slice(sha256d.as_slice())
+    }
+}
+
+impl Display for Hash {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut hex = [0u8; HASH_SIZE * 2];
+        faster_hex::hex_encode(&self.0, &mut hex)
+            .expect("The output is exactly twice the size of the input");
+        f.write_str(unsafe { str::from_utf8_unchecked(&hex) })
+    }
+}
+
+impl Debug for Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self, f)
+    }
+}
+
+impl FromStr for Hash {
+    type Err = faster_hex::Error;
+
+    #[inline]
+    fn from_str(hash_str: &str) -> Result<Self, Self::Err> {
+        let mut bytes = [0u8; HASH_SIZE];
+        faster_hex::hex_decode(hash_str.as_bytes(), &mut bytes)?;
+        Ok(Hash(bytes))
+    }
+}
+
+impl AsRef<[u8; HASH_SIZE]> for Hash {
+    #[inline(always)]
+    fn as_ref(&self) -> &[u8; HASH_SIZE] {
+        &self.0
+    }
+}
+
+impl AsRef<[u8]> for Hash {
+    #[inline(always)]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl ToHex for Hash {
+    fn to_hex(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl FromHex for Hash {
+    type Error = faster_hex::Error;
+    fn from_hex(hex_str: &str) -> Result<Self, Self::Error> {
+        Self::from_str(hex_str)
+    }
+}
+
+pub const ZERO_HASH: Hash = Hash([0; HASH_SIZE]);
+
+#[cfg(test)]
+mod tests {
+    use super::Hash;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_hash_basics() {
+        let hash_str = "8e40af02265360d59f4ecf9ae9ebf8f00a3118408f5a9cdcbcc9c0f93642f3af";
+        let hash = Hash::from_str(hash_str).unwrap();
+        assert_eq!(hash_str, hash.to_string());
+        let hash2 = Hash::from_str(hash_str).unwrap();
+        assert_eq!(hash, hash2);
+
+        let hash3 =
+            Hash::from_str("8e40af02265360d59f4ecf9ae9ebf8f00a3118408f5a9cdcbcc9c0f93642f3ab")
+                .unwrap();
+        assert_ne!(hash2, hash3);
+
+        let odd_str = "8e40af02265360d59f4ecf9ae9ebf8f00a3118408f5a9cdcbcc9c0f93642f3a";
+        let short_str = "8e40af02265360d59f4ecf9ae9ebf8f00a3118408f5a9cdcbcc9c0f93642f3";
+
+        assert!(
+            matches!(dbg!(Hash::from_str(odd_str)), Err(faster_hex::Error::InvalidLength(len)) if len == 64)
+        );
+        assert!(
+            matches!(dbg!(Hash::from_str(short_str)), Err(faster_hex::Error::InvalidLength(len)) if len == 64)
+        );
+    }
+}

@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+wasm-pack build --weak-refs --target nodejs --out-name sparkle --out-dir nodejs/sparkle --features wasm32-sdk

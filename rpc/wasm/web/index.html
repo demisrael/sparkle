@@ -1,0 +1,12 @@
+<html>
+    <head>
+        <script type="module">
+            import * as sparkle from './sparkle-rpc/sparkle-rpc.js';
+            (async () => {
+                await sparkle.default('./sparkle-rpc/sparkle-rpc_bg.wasm');
+                console.log(sparkle.version());
+            })();
+        </script>
+    </head>
+    <body></body>
+</html>

@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+./build-web $@
+
+echo "building full"
+typedoc --name "Sparkle WASM32 SDK" --sourceLinkExternal --readme ./README.md --options ./build/docs/ --out ./docs/sparkle ./build/docs/sparkle.ts

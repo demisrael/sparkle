@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to {{ domain }}</title>
+</head>
+<body>
+    <h1>Welcome to {{ domain }}</h1>
+    <form action="/login" method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username"><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br>
+        <input type="submit" value="Login">
+    </form>
+    <h2>Access Data</h2>
+    <button onclick="fetchPrivateData()">Access Private Data</button>
+    <div id="private-data"></div>
+    <script>
+        async function fetchPrivateData() {
+            const response = await fetch('/data/private', { credentials: 'include' });
+            if (response.ok) {
+                const data = await response.text();
+                document.getElementById('private-data').innerText = data;
+            } else {
+                alert('Access denied');
+            }
+        }
+    </script>
+</body>
+</html>
