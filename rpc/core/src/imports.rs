@@ -14,5 +14,4 @@ pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
 pub use workflow_rpc::types::{MsgT, OpsT};
 pub use workflow_serializer::prelude::*;
 
-#[cfg(not(target_arch = "wasm32"))]
-pub use workflow_rpc::server::prelude::*;
+pub use kaspa_consensus_core::network::{NetworkId, NetworkType};

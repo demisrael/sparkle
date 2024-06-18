@@ -99,12 +99,12 @@ kaspa-wrpc-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.13.1"
-workflow-http = "0.13.1"
-workflow-log = "0.13.1"
-workflow-wasm = "0.13.1"
-workflow-rpc = "0.13.1"
-workflow-serializer = "0.13.1"
+workflow-core = "0.13.2"
+workflow-http = "0.13.2"
+workflow-log = "0.13.2"
+workflow-wasm = "0.13.2"
+workflow-rpc = "0.13.2"
+workflow-serializer = "0.13.2"
 
 # workflow-core = { path = "../workflow-rs/core" }
 # workflow-http = { path = "../workflow-rs/http" }

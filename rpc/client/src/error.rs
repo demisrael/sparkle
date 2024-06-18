@@ -1,6 +1,5 @@
 use thiserror::Error;
 use workflow_core::channel::{ChannelError, RecvError, SendError, TryRecvError, TrySendError};
-
 pub use workflow_rpc::client::error::Error as RpcError;
 
 #[derive(Error, Debug)]
@@ -31,6 +30,9 @@ pub enum Error {
 
     #[error(transparent)]
     RpcCore(#[from] sparkle_rpc_core::error::Error),
+
+    #[error("Network id mismatch - expecting '{expected}' but connected to '{connected}'")]
+    NetworkId { expected: String, connected: String },
 }
 
 impl Error {

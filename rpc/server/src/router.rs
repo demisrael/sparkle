@@ -17,7 +17,7 @@ impl Router {
             Server,
             Connection,
             RpcApiOps,
-            [Ping,]
+            [Ping, GetStatus]
         );
 
         Router {

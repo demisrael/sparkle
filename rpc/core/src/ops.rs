@@ -17,4 +17,5 @@ use crate::imports::*;
 pub enum RpcApiOps {
     Notify = 0,
     Ping,
+    GetStatus,
 }

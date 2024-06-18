@@ -509,6 +509,18 @@ impl Nexus {
         let response = PingResponse {};
         Ok(response)
     }
+
+    pub async fn get_status_call(
+        &self,
+        _ctx: &dyn ContextT,
+        _request: GetStatusRequest,
+    ) -> Result<GetStatusResponse> {
+        let response = GetStatusResponse {
+            sparkled_version: std::env!("CARGO_PKG_VERSION").to_string(),
+            network_id: self.network_id(),
+        };
+        Ok(response)
+    }
 }
 
 const SERVICE: &str = "NEXUS";

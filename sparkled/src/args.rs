@@ -90,7 +90,8 @@ impl Args {
         let network_id = matches
             .get_one::<NetworkId>("network")
             .cloned()
-            .unwrap_or(NetworkId::new(NetworkType::Mainnet));
+            .unwrap_or(NetworkId::with_suffix(NetworkType::Testnet, 11));
+        // .unwrap_or(NetworkId::new(NetworkType::Mainnet));
 
         let node_rpc = matches.get_one::<String>("node-rpc").cloned();
 

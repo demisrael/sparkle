@@ -46,6 +46,10 @@ impl Client {
                     "Connected to {}",
                     client.url().unwrap_or_else(|| "🤷".to_string())
                 );
+
+                // ensure that sparkled network matches ours
+                let _status = client.negotiate(&network_id).await?;
+
                 println!("📡 Pinging...");
                 client.ping().await?;
                 println!("🥂 Ok...");

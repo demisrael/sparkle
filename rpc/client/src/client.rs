@@ -281,13 +281,29 @@ impl SparkleRpcClient {
     pub fn trigger_abort(&self) -> Result<()> {
         Ok(self.inner.rpc_client.trigger_abort()?)
     }
+
+    pub async fn negotiate(&self, network_id: &NetworkId) -> Result<GetStatusResponse> {
+        let status = self.get_status().await?;
+        if status.network_id != *network_id {
+            return Err(Error::NetworkId {
+                expected: network_id.to_string(),
+                connected: status.network_id.to_string(),
+            });
+        }
+        Ok(status)
+    }
 }
 
 impl SparkleRpcClient {
-    build_wrpc_client_interface!(RpcApiOps, [Ping,]);
+    build_wrpc_client_interface!(RpcApiOps, [Ping, GetStatus]);
 
     pub async fn ping(&self) -> Result<PingResponse> {
         let request = PingRequest {};
         Ok(self.ping_call(request).await?)
+    }
+
+    pub async fn get_status(&self) -> Result<GetStatusResponse> {
+        let request = GetStatusRequest {};
+        Ok(self.get_status_call(request).await?)
     }
 }

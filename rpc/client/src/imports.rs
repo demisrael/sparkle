@@ -7,6 +7,7 @@ pub use async_trait::async_trait;
 pub use borsh::{BorshDeserialize, BorshSerialize};
 pub use cfg_if::cfg_if;
 pub use futures::{select, FutureExt, StreamExt};
+pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use serde::{Deserialize, Serialize};
 pub use sparkle_rpc_core::prelude::*;
 pub use std::sync::{

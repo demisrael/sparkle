@@ -29,5 +29,7 @@ workflow-log.workspace = true
 workflow-rpc.workspace = true
 workflow-serializer.workspace = true
 
+kaspa-consensus-core.workspace = true
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio.workspace = true
