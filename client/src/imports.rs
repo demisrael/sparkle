@@ -1,5 +1,7 @@
 pub use crate::error::Error;
+pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_hashes::Hash;
+pub use kaspa_wallet_keys::prelude::Secret;
 pub use serde::{Deserialize, Serialize};
 pub use serde_with::{serde_as, DeserializeFromStr, DisplayFromStr, SerializeDisplay};
 pub use sparkle_core::prelude::*;

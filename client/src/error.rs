@@ -13,6 +13,9 @@ pub enum Error {
 
     #[error(transparent)]
     RpcClient(#[from] sparkle_rpc_client::error::Error),
+
+    #[error(transparent)]
+    Wallet(#[from] kaspa_wallet_core::error::Error),
 }
 
 impl Error {
