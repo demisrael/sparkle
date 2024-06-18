@@ -166,7 +166,7 @@ jobs:
         run: cargo clippy --workspace --all --target wasm32-unknown-unknown
 
   wasm32:
-    name: WASM32 Builds
+    name: Building WASM32 SDK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -246,7 +246,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-    name: Building, ${{ matrix.os }}
+    name: Building ${{ matrix.os }}
     steps:
       - name: Fix CRLF on Windows
         if: runner.os == 'Windows'
