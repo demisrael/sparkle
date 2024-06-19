@@ -4,6 +4,8 @@ cfg_if::cfg_if! {
         pub mod context;
         pub mod error;
         pub mod imports;
+        pub mod operations;
+        pub mod optypes;
         #[allow(clippy::module_inception)]
         pub mod nexus;
         pub mod event;

@@ -40,7 +40,6 @@ impl Nexus {
     pub async fn try_new(network_id: NetworkId, url: Option<&str>) -> Result<Self> {
         // for now use the default public node infrastructure
         let resolver = Resolver::default();
-
         let rpc_client = Arc::new(KaspaRpcClient::new_with_args(
             WrpcEncoding::Borsh,
             url,
@@ -303,7 +302,8 @@ impl Nexus {
             }
 
             Notification::BlockAdded(block_added_notification) => {
-                for tx in block_added_notification.block.transactions.iter() {
+                // Skip coinbase tx
+                for tx in block_added_notification.block.transactions.iter().skip(1) {
                     self.handle_transaction(tx).await?;
                 }
 
@@ -346,7 +346,7 @@ impl Nexus {
         self.notify(Event::DaaScoreChange { current_daa_score })
             .await?;
 
-        println!("DAA Score: {current_daa_score}");
+        // println!("DAA Score: {current_daa_score}");
 
         Ok(())
     }
