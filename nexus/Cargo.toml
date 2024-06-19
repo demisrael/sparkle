@@ -21,6 +21,9 @@ kaspa-notify.workspace = true
 kaspa-rpc-core.workspace = true
 kaspa-wrpc-client.workspace = true
 kaspa-wallet-core.workspace = true
+kaspa-txscript.workspace = true
+kaspa-txscript-errors.workspace = true
+kaspa-addresses.workspace = true
 
 async-std.workspace = true
 async-trait.workspace = true
@@ -30,8 +33,10 @@ downcast-rs.workspace = true
 faster-hex.workspace = true
 futures-util.workspace = true
 futures.workspace = true
+itertools.workspace = true
 mini-moka.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 
 workflow-core.workspace = true

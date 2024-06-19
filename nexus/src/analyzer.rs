@@ -47,8 +47,11 @@ impl Analyzer {
                             match &*msg {
                                 Event::Transaction { transaction } => {
 
-                                    let txid = transaction.verbose_data.as_ref().map(|data| data.transaction_id.to_string()).unwrap_or_else(||"N/A".to_string());
-                                    println!("Received transaction: {txid}");
+                                    if let Some(op) = detect_krc20(transaction){
+                                        dbg!(op);
+                                    }
+                                    // let txid = transaction.verbose_data.as_ref().map(|data| data.transaction_id.to_string()).unwrap_or_else(||"N/A".to_string());
+                                    // println!("Received transaction: {txid}");
 
                                 },
                                 _ => { } // consume unrelated events
@@ -98,4 +101,158 @@ impl Service for Analyzer {
         self.inner.shutdown.response.recv().await?;
         Ok(())
     }
+}
+
+#[inline]
+fn window_find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    // Ensure we don't start beyond the end of the haystack
+    if haystack.len() <= 30 {
+        return None;
+    }
+
+    // Optization: iterate starting from the 30th byte
+    for (position, window) in haystack[30..].windows(needle.len()).enumerate() {
+        if window == needle {
+            return Some(position + 30); // Adjust the position to account for the 30 byte offset
+        }
+    }
+    None
+}
+
+fn parse_script<T: VerifiableTransaction>(
+    script: &[u8],
+) -> impl Iterator<Item = std::result::Result<Box<dyn OpCodeImplementation<T>>, TxScriptError>> + '_
+{
+    script.iter().batching(|it| deserialize_next_opcode(it))
+}
+
+pub trait ITransaction {
+    fn signature_script(&self) -> Option<&[u8]>;
+    fn rcv(&self) -> Address;
+}
+
+impl ITransaction for &RpcTransaction {
+    fn signature_script(&self) -> Option<&[u8]> {
+        Some(&self.inputs[0].signature_script[..])
+    }
+    fn rcv(&self) -> Address {
+        extract_script_pub_key_address(
+            &self.outputs[0].script_public_key,
+            Prefix::try_from("kaspatest").unwrap(),
+        )
+        .unwrap()
+    }
+}
+
+impl ITransaction for &Transaction {
+    fn signature_script(&self) -> Option<&[u8]> {
+        Some(&self.inputs[0].signature_script[..])
+    }
+    fn rcv(&self) -> Address {
+        extract_script_pub_key_address(
+            &self.outputs[0].script_public_key,
+            Prefix::try_from("kaspatest").unwrap(),
+        )
+        .unwrap()
+    }
+}
+impl ITransaction for &Box<RpcTransaction> {
+    fn signature_script(&self) -> Option<&[u8]> {
+        if self.inputs.is_empty() {
+            return None;
+        }
+        Some(&self.inputs[0].signature_script[..])
+    }
+    fn rcv(&self) -> Address {
+        extract_script_pub_key_address(
+            &self.outputs[0].script_public_key,
+            Prefix::try_from("kaspatest").unwrap(),
+        )
+        .unwrap()
+    }
+}
+
+pub fn detect_krc20_header(haystack: &[u8]) -> bool {
+    window_find(haystack, &KRC20_HEADER_UC).is_some()
+        || window_find(haystack, &KRC20_HEADER_LC).is_some()
+}
+
+pub fn detect_kasplex_header(haystack: &[u8]) -> bool {
+    window_find(haystack, &KASPLEX_HEADER_LC).is_some()
+        || window_find(haystack, &KASPLEX_HEADER_UC).is_some()
+}
+
+pub fn detect_krc20_receiver<T: ITransaction>(sigtx: T) -> Address {
+    sigtx.rcv()
+}
+
+pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<BaseData> {
+    let mut inscription: Option<BaseData> = None;
+
+    if let Some(signature_script) = sigtx.signature_script() {
+        if detect_kasplex_header(signature_script) {
+            println!("{:?}", signature_script);
+
+            // Get the second opcode
+            let mut opcodes_iter = parse_script(signature_script);
+            let second_opcode: Option<
+                std::result::Result<
+                    Box<dyn OpCodeImplementation<PopulatedTransaction>>,
+                    TxScriptError,
+                >,
+            > = opcodes_iter.nth(1);
+
+            match second_opcode {
+                Some(Ok(opcode)) => {
+                    // Handle the second opcode
+                    dbg!("Got the second opcode!");
+                    if !opcode.is_empty()
+                        && opcode.is_push_opcode()
+                        && detect_krc20_header(opcode.get_data())
+                    {
+                        // Second-to-last only lookup optimization.
+                        let mut previous: Option<Vec<u8>> = None;
+                        let mut current: Option<Vec<u8>> = None;
+
+                        let _result: std::result::Result<(), TxScriptError> =
+                            parse_script(opcode.get_data()).try_for_each(
+                                |inner_opcode: std::result::Result<
+                                    Box<dyn OpCodeImplementation<PopulatedTransaction>>,
+                                    TxScriptError,
+                                >| {
+                                    let inner_opcode: Box<
+                                        dyn OpCodeImplementation<PopulatedTransaction>,
+                                    > = inner_opcode?;
+                                    previous.clone_from(&current);
+                                    current = match !inner_opcode.is_empty()
+                                        && inner_opcode.is_push_opcode()
+                                    {
+                                        true => Some(inner_opcode.get_data().to_vec()),
+                                        false => None,
+                                    };
+                                    Ok(())
+                                },
+                            );
+
+                        if previous.is_some() {
+                            let second_to_last_op = &previous.unwrap()[..];
+                            if let Some(data) = deserialize(second_to_last_op) {
+                                inscription = Some(data);
+                            }
+                        }
+                    }
+                }
+                Some(Err(e)) => {
+                    // Handle the error
+                    println!("Error while parsing opcodes: {:?}", e);
+                }
+                None => {
+                    // Handle the case where there are fewer than two opcodes
+                    println!("There are fewer than two opcodes in the script.");
+                }
+            }
+        }
+    }
+
+    inscription
 }
