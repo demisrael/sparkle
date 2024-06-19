@@ -306,8 +306,6 @@ pub mod krc20 {
     ///             "max": "2100000000000000",
     ///             "lim": "100000000000",
     ///             "dec": "8",
-    ///             "daas": "78000000",
-    ///             "daae": "88000000",
     ///             "amt": "2300000000",
     ///             "from": "kaspa:qra0p5ky...",
     ///             "to": "kaspa:qqabb6cz...",
@@ -350,10 +348,6 @@ pub mod krc20 {
         pub limit: u128,
 
         pub dec: u64,
-
-        pub daas: u64,
-
-        pub daae: u64,
 
         #[serde_as(as = "DisplayFromStr")]
         #[serde(rename = "amt")]
