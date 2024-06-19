@@ -63,6 +63,7 @@ pub mod v1 {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[cfg(test)]
     mod test {
 
@@ -70,22 +71,14 @@ pub mod v1 {
 
         #[tokio::test]
         async fn test_get_indexer_status() {
-            let indexer = Indexer::try_new(Endpoint::Network {
-                network: Network::Testnet11,
-                version: 1,
-            })
-            .unwrap();
+            let indexer = Indexer::try_new(v1::Network::Testnet11.into()).unwrap();
             let result = indexer.get_indexer_status().await.unwrap();
             println!("{:?}", result);
         }
 
         #[tokio::test]
         async fn test_get_token_list() {
-            let indexer = Indexer::try_new(Endpoint::Network {
-                network: Network::Testnet11,
-                version: 1,
-            })
-            .unwrap();
+            let indexer = Indexer::try_new(v1::Network::Testnet11.into()).unwrap();
             let result = indexer.get_token_list().await.unwrap();
             println!("{:?}", result);
         }
