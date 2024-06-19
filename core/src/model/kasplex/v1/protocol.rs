@@ -19,7 +19,7 @@ impl FromStr for Protocol {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        match s {
+        match s.to_uppercase().as_str() {
             "KRC-20" => Ok(Protocol::Krc20),
             _ => Err(Error::Custom(format!("Invalid protocol: {}", s))),
         }
