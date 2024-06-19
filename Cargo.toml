@@ -10,7 +10,7 @@ members = [
     "nexus",
     "sparkled",
     "macros",
-    "wasm", "tx",
+    "wasm",
 ]
 default-members = ["client","sparkled"]
 
