@@ -16,7 +16,7 @@ default-members = ["client","sparkled"]
 
 
 [workspace.package]
-rust-version = "1.78.0"
+rust-version = "1.79.0"
 version = "0.0.1"
 authors = ["Sparkle Developers"]
 license = "Apache-2.0 OR MIT"
@@ -92,6 +92,8 @@ kaspa-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "s
 kaspa-wasm-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
 kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
 kaspa-wrpc-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+kaspa-txscript-errors = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
@@ -144,6 +146,7 @@ faster-hex = "0.9.0"
 futures = { version = "0.3.29" }
 futures-util = { version = "0.3.29", default-features = false, features = ["alloc"] }
 hex = { version = "0.4.3", features = ["serde"] }
+itertools = {version= "0.13.0"}
 js-sys = "0.3.67"
 log = "0.4.20"
 mail-send = "0.4.7"
