@@ -2,7 +2,6 @@ cfg_if::cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         pub mod context;
-        pub mod constants;
         pub mod error;
         pub mod imports;
         pub mod operations;

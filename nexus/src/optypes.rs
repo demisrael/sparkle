@@ -1,4 +1,4 @@
-use crate::constants::{FEE_DEPLOY, FEE_MINT};
+use sparkle_core::constants::{FEE_DEPLOY, FEE_MINT};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 

@@ -1,6 +1,6 @@
-use crate::constants::PROTOCOL_ID;
 use crate::optypes::Krc20OpType;
 use serde::{Deserialize, Serialize};
+use sparkle_core::constants::PROTOCOL_ID;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Krc20OperationsError {

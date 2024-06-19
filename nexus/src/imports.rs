@@ -37,13 +37,13 @@ pub use kaspa_txscript::extract_script_pub_key_address;
 pub use kaspa_txscript::opcodes::{deserialize_next_opcode, OpCodeImplementation};
 pub use kaspa_txscript_errors::TxScriptError;
 
+pub use sparkle_core::constants::*;
 pub use sparkle_core::hash::Hash;
 pub use sparkle_core::id::{Id, IdT};
 pub use sparkle_core::runtime::{Runtime, Service, ServiceError, ServiceResult};
 pub use sparkle_rpc_core::prelude::*;
 
 pub use crate::analyzer::Analyzer;
-pub use crate::constants::*;
 pub use crate::context::ContextT;
 pub use crate::error::Error;
 pub use crate::event::Event;
