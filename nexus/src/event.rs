@@ -1,5 +1,5 @@
 use crate::imports::*;
-use kaspa_rpc_core::model::*;
+// use kaspa_rpc_core::model::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Event {

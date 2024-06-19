@@ -1,4 +1,5 @@
 use crate::imports::*;
+use serde_json::from_slice;
 // use kaspa_rpc_core::model::*;
 
 pub enum AnalyzerEvent {
@@ -48,6 +49,7 @@ impl Analyzer {
                                 Event::Transaction { transaction } => {
 
                                     if let Some(op) = detect_krc20(transaction){
+                                        println!("Found KRC-20");
                                         dbg!(op);
                                     }
                                     // let txid = transaction.verbose_data.as_ref().map(|data| data.transaction_id.to_string()).unwrap_or_else(||"N/A".to_string());
@@ -186,13 +188,11 @@ pub fn detect_krc20_receiver<T: ITransaction>(sigtx: T) -> Address {
     sigtx.rcv()
 }
 
-pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<BaseData> {
-    let mut inscription: Option<BaseData> = None;
+pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
+    let mut inscription: Option<TokenTransaction> = None;
 
     if let Some(signature_script) = sigtx.signature_script() {
         if detect_kasplex_header(signature_script) {
-            println!("{:?}", signature_script);
-
             // Get the second opcode
             let mut opcodes_iter = parse_script(signature_script);
             let second_opcode: Option<
@@ -204,40 +204,25 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<BaseData> {
 
             match second_opcode {
                 Some(Ok(opcode)) => {
-                    // Handle the second opcode
-                    dbg!("Got the second opcode!");
                     if !opcode.is_empty()
                         && opcode.is_push_opcode()
                         && detect_krc20_header(opcode.get_data())
                     {
-                        // Second-to-last only lookup optimization.
-                        let mut previous: Option<Vec<u8>> = None;
-                        let mut current: Option<Vec<u8>> = None;
-
-                        let _result: std::result::Result<(), TxScriptError> =
-                            parse_script(opcode.get_data()).try_for_each(
-                                |inner_opcode: std::result::Result<
-                                    Box<dyn OpCodeImplementation<PopulatedTransaction>>,
-                                    TxScriptError,
-                                >| {
-                                    let inner_opcode: Box<
-                                        dyn OpCodeImplementation<PopulatedTransaction>,
-                                    > = inner_opcode?;
-                                    previous.clone_from(&current);
-                                    current = match !inner_opcode.is_empty()
-                                        && inner_opcode.is_push_opcode()
-                                    {
-                                        true => Some(inner_opcode.get_data().to_vec()),
-                                        false => None,
-                                    };
-                                    Ok(())
-                                },
-                            );
-
-                        if previous.is_some() {
-                            let second_to_last_op = &previous.unwrap()[..];
-                            if let Some(data) = deserialize(second_to_last_op) {
-                                inscription = Some(data);
+                        let inner_opcodes: Vec<_> =
+                            parse_script::<PopulatedTransaction>(opcode.get_data()).collect();
+                        if inner_opcodes.len() >= 2 {
+                            if let Some(Ok(second_to_last_opcode)) =
+                                inner_opcodes.get(inner_opcodes.len() - 2)
+                            {
+                                match from_slice(second_to_last_opcode.get_data()) {
+                                    Ok(token_transaction) => {
+                                        inscription = Some(token_transaction);
+                                    }
+                                    Err(e) => {
+                                        // Handle the error if necessary
+                                        eprintln!("Failed to deserialize: {:?}", e);
+                                    }
+                                }
                             }
                         }
                     }

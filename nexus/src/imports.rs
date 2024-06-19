@@ -40,6 +40,7 @@ pub use kaspa_txscript_errors::TxScriptError;
 pub use sparkle_core::constants::*;
 pub use sparkle_core::hash::Hash;
 pub use sparkle_core::id::{Id, IdT};
+pub use sparkle_core::model::kasplex::v1::krc20::TokenTransaction;
 pub use sparkle_core::runtime::{Runtime, Service, ServiceError, ServiceResult};
 pub use sparkle_rpc_core::prelude::*;
 
@@ -48,5 +49,5 @@ pub use crate::context::ContextT;
 pub use crate::error::Error;
 pub use crate::event::Event;
 pub use crate::nexus::Nexus;
-pub use crate::operations::{deserialize, BaseData};
+// pub use crate::operations::{deserialize, BaseData};
 pub use crate::result::Result;
