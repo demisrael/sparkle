@@ -75,7 +75,7 @@ impl Wallet {
             } else if wallet_descriptors.len() == 1 {
                 wallet_descriptors.first().unwrap().filename.clone()
             } else {
-                let mut selector = cliclack::select(format!("Please select a wallet:"));
+                let mut selector = cliclack::select("Please select a wallet:");
                 for WalletDescriptor { filename, title } in wallet_descriptors {
                     selector = selector.item(filename.clone(), title.as_deref().unwrap_or(""), "");
                 }
@@ -135,17 +135,16 @@ impl Wallet {
         });
 
         // let balances = accounts.iter().map(|account|account)
-        let account_map = AccountHashMap::from_iter(accounts.iter().map(|account| {
-            (
-                account.descriptor.account_id.clone(),
-                account.descriptor.clone(),
-            )
-        }));
+        let account_map = AccountHashMap::from_iter(
+            accounts
+                .iter()
+                .map(|account| (account.descriptor.account_id, account.descriptor.clone())),
+        );
 
         spinner.stop("Loading wallet...");
 
         let account_id = if accounts.len() == 1 {
-            accounts.first().unwrap().descriptor.account_id.clone()
+            accounts.first().unwrap().descriptor.account_id
         } else {
             let mut selector = cliclack::select("Please select an account:");
             for account in accounts {
@@ -169,7 +168,7 @@ impl Wallet {
                 ]
                 .join("");
 
-                selector = selector.item(descriptor.account_id.clone(), descr, "");
+                selector = selector.item(descriptor.account_id, descr, "");
             }
             selector.interact().map_err(|_| Error::UserAbort)?
         };
