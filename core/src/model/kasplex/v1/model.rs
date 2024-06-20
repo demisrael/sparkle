@@ -2,6 +2,8 @@ use super::*;
 use crate::imports::*;
 use kaspa_wallet_core::utils::sompi_to_kaspa_string_with_suffix;
 use std::fmt::Write;
+// use serde::de::{self, Deserializer};
+// use std::str::FromStr;
 
 ///
 /// URL path: `//info`
@@ -306,8 +308,6 @@ pub mod krc20 {
     ///             "max": "2100000000000000",
     ///             "lim": "100000000000",
     ///             "dec": "8",
-    ///             "daas": "78000000",
-    ///             "daae": "88000000",
     ///             "amt": "2300000000",
     ///             "from": "kaspa:qra0p5ky...",
     ///             "to": "kaspa:qqabb6cz...",
@@ -332,8 +332,22 @@ pub mod krc20 {
         pub result: Vec<TokenTransaction>,
     }
 
+    //     fn deserialize_option_u128<'de, D>(deserializer: D) -> std::result::Result<Option<u128>, D::Error>
+    // where
+    //     D: Deserializer<'de>,
+    // {
+    //     // let s: Option<&str> = std::option::Option::deserialize(deserializer)?;
+    //     let s: Option<&str> = <Option<&str> as serde::Deserialize>::deserialize(deserializer)?;
+
+    //     match s {
+    //         Some(value) => {
+    //             u128::from_str(value).map(Some).map_err(de::Error::custom)
+    //         }
+    //         None => Ok(None),
+    //     }
+    // }
     #[serde_as]
-    #[derive(Debug, Deserialize)]
+    #[derive(Debug, Deserialize, Serialize)]
     pub struct TokenTransaction {
         #[serde_as(as = "DisplayFromStr")]
         #[serde(rename = "p")]
@@ -343,50 +357,46 @@ pub mod krc20 {
 
         pub tick: String,
 
-        #[serde_as(as = "DisplayFromStr")]
-        pub max: u128,
+        #[serde_as(as = "Option<DisplayFromStr>")]
+        pub max: Option<u128>,
 
-        #[serde(rename = "lim")]
-        pub limit: u128,
+        #[serde(rename = "Option<lim>")]
+        pub limit: Option<u128>,
 
-        pub dec: u64,
+        pub dec: Option<u64>,
 
-        pub daas: u64,
+        #[serde_as(as = "Option<DisplayFromStr>")]
+        #[serde(rename = "Option<amt>")]
+        pub amount: Option<u128>,
 
-        pub daae: u64,
+        pub from: Option<String>,
 
-        #[serde_as(as = "DisplayFromStr")]
-        #[serde(rename = "amt")]
-        pub amount: u128,
+        pub to: Option<String>,
 
-        pub from: String,
-
-        pub to: String,
-
-        #[serde_as(as = "DisplayFromStr")]
-        #[serde(rename = "opScore")]
-        pub op_score: u64,
+        #[serde_as(as = "Option<DisplayFromStr>")]
+        #[serde(rename = "Option<opScore>")]
+        pub op_score: Option<u64>,
 
         #[serde(rename = "hashRev")]
-        pub hash_rev: Hash,
+        pub hash_rev: Option<Hash>,
 
         #[serde(rename = "feeRev")]
-        pub fee_rev: String,
+        pub fee_rev: Option<String>,
 
         #[serde(rename = "txAccept")]
-        pub tx_accept: String,
+        pub tx_accept: Option<String>,
 
         #[serde(rename = "opAccept")]
-        pub op_accept: String,
+        pub op_accept: Option<String>,
 
         #[serde(rename = "opError")]
         pub op_error: Option<String>,
 
         #[serde(rename = "mtsAdd")]
-        pub mts_add: String,
+        pub mts_add: Option<String>,
 
         #[serde(rename = "mtsMod")]
-        pub mts_mod: String,
+        pub mts_mod: Option<String>,
     }
 
     ///
