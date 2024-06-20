@@ -97,8 +97,6 @@ pub mod krc20 {
     ///         "max": 2100000000000000,
     ///         "lim": 100000000000,
     ///         "dec": 8,
-    ///         "daas": 78000000,
-    ///         "daae": 88000000,
     ///         "minted": 1500000000000000,
     ///         "opScoreAdd": 77993954,
     ///         "opScoreMod": 79993666,
@@ -132,15 +130,6 @@ pub mod krc20 {
 
         #[serde_as(as = "DisplayFromStr")]
         pub dec: u64,
-
-        // #[serde_as(as = "DisplayFromStr")]
-        // #[serde(rename = "daas")]
-        // pub mint_start_daa_score : u64,
-
-        // // TODO - rename to ?
-        // #[serde_as(as = "DisplayFromStr")]
-        // #[serde(rename = "daae")]
-        // pub mint_end_daa_score : u64,
 
         // TODO - rename to total_minted ?
         #[serde_as(as = "DisplayFromStr")]
@@ -178,8 +167,6 @@ pub mod krc20 {
     ///         "max": 2100000000000000,
     ///         "lim": 100000000000,
     ///         "dec": 8,
-    ///         "daas": 78000000,
-    ///         "daae": 88000000,
     ///         "minted": 1500000000000000,
     ///         "opScoreAdd": 77993954,
     ///         "opScoreMod": 79993666,
@@ -347,7 +334,7 @@ pub mod krc20 {
     //     }
     // }
     #[serde_as]
-    #[derive(Debug, Deserialize, Serialize)]
+    #[derive(Debug, Deserialize, Serialize, PartialEq)]
     pub struct TokenTransaction {
         #[serde_as(as = "DisplayFromStr")]
         #[serde(rename = "p")]
@@ -366,7 +353,7 @@ pub mod krc20 {
         pub dec: Option<u64>,
 
         #[serde_as(as = "Option<DisplayFromStr>")]
-        #[serde(rename = "Option<amt>")]
+        #[serde(rename = "amt")]
         pub amount: Option<u128>,
 
         pub from: Option<String>,
@@ -413,8 +400,6 @@ pub mod krc20 {
     ///             "max": "2100000000000000",
     ///             "lim": "100000000000",
     ///             "dec": "8",
-    ///             "daas": "78000000",
-    ///             "daae": "88000000",
     ///             "amt": "2300000000",
     ///             "from": "kaspa:qra0p5ky...",
     ///             "to": "kaspa:qqabb6cz...",
@@ -436,5 +421,145 @@ pub mod krc20 {
     pub struct TokenTransactionIdResponse {
         pub message: String,
         pub result: Vec<TokenTransaction>,
+    }
+
+    pub struct TokenTransactionBuilder {
+        protocol: Protocol,
+        op: String,
+        tick: String,
+        max: Option<u128>,
+        limit: Option<u128>,
+        dec: Option<u64>,
+        amount: Option<u128>,
+        from: Option<String>,
+        to: Option<String>,
+        op_score: Option<u64>,
+        hash_rev: Option<Hash>,
+        fee_rev: Option<String>,
+        tx_accept: Option<String>,
+        op_accept: Option<String>,
+        op_error: Option<String>,
+        mts_add: Option<String>,
+        mts_mod: Option<String>,
+    }
+
+    impl TokenTransactionBuilder {
+        pub fn new(protocol: Protocol, op: String, tick: String) -> Self {
+            Self {
+                protocol,
+                op,
+                tick,
+                max: None,
+                limit: None,
+                dec: None,
+                amount: None,
+                from: None,
+                to: None,
+                op_score: None,
+                hash_rev: None,
+                fee_rev: None,
+                tx_accept: None,
+                op_accept: None,
+                op_error: None,
+                mts_add: None,
+                mts_mod: None,
+            }
+        }
+
+        pub fn max(mut self, max: u128) -> Self {
+            self.max = Some(max);
+            self
+        }
+
+        pub fn amount(mut self, amount: u128) -> Self {
+            self.amount = Some(amount);
+            self
+        }
+
+        pub fn limit(mut self, limit: u128) -> Self {
+            self.limit = Some(limit);
+            self
+        }
+
+        pub fn dec(mut self, dec: u64) -> Self {
+            self.dec = Some(dec);
+            self
+        }
+
+        pub fn build(self) -> TokenTransaction {
+            TokenTransaction {
+                protocol: self.protocol,
+                op: self.op,
+                tick: self.tick,
+                max: self.max,
+                limit: self.limit,
+                dec: self.dec,
+                amount: self.amount,
+                from: self.from,
+                to: self.to,
+                op_score: self.op_score,
+                hash_rev: self.hash_rev,
+                fee_rev: self.fee_rev,
+                tx_accept: self.tx_accept,
+                op_accept: self.op_accept,
+                op_error: self.op_error,
+                mts_add: self.mts_add,
+                mts_mod: self.mts_mod,
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use serde_json;
+
+        // Struct to hold test case data
+        struct TestCase {
+            json_str: &'static str,
+            expected: std::result::Result<TokenTransaction, serde_json::Error>,
+        }
+
+        // List of test cases
+        fn get_test_cases() -> Vec<TestCase> {
+            vec![TestCase {
+                json_str: r#"
+                    {
+                        "p": "KRC-20",
+                        "op": "transfer",
+                        "tick": "SPARKL",
+                        "amt": "500"
+                    }
+                    "#,
+                expected: Ok(TokenTransactionBuilder::new(
+                    Protocol::Krc20,
+                    "transfer".to_string(),
+                    "SPARKL".to_string(),
+                )
+                .amount(500)
+                .build()),
+            }]
+        }
+
+        // Generic test function
+        fn run_test_case(test_case: TestCase) {
+            let deserialized: std::result::Result<TokenTransaction, serde_json::Error> =
+                serde_json::from_str(test_case.json_str);
+            match (deserialized, test_case.expected) {
+                (Ok(result), Ok(expected)) => assert_eq!(result, expected),
+                (Err(_), Err(_)) => {} // Both are errors, which is expected
+                (Ok(_), Err(_)) | (Err(_), Ok(_)) => {
+                    panic!("Test case failed: mismatched result and expected")
+                }
+            }
+        }
+
+        #[test]
+        fn test_token_transaction_serialization() {
+            let test_cases = get_test_cases();
+            for test_case in test_cases {
+                run_test_case(test_case);
+            }
+        }
     }
 }
