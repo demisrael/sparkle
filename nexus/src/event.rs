@@ -1,4 +1,5 @@
 use crate::imports::*;
+#[allow(unused_imports)]
 use kaspa_rpc_core::model::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

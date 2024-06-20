@@ -63,37 +63,39 @@ sparkle-macros = { path = "macros" }
 # kaspa-wrpc-client = "0.13.4"
 # kaspa-wrpc-wasm = "0.13.4"
 
-# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-# kaspa-consensus-wasm = { path = "../rusty-kaspa/consensus/wasm" }
-# kaspa-hashes = { path = "../rusty-kaspa/crypto/hashes" }
-# kaspa-notify = { path = "../rusty-kaspa/notify" }
-# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-# kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
-# kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
-# kaspa-wasm = { path = "../rusty-kaspa/wasm" }
-# kaspa-wasm-core = { path = "../rusty-kaspa/wasm/core" }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client" }
-# kaspa-wrpc-wasm = { path = "../rusty-kaspa/rpc/wrpc/wasm" }
+kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-consensus-wasm = { path = "../rusty-kaspa/consensus/wasm" }
+kaspa-hashes = { path = "../rusty-kaspa/crypto/hashes" }
+kaspa-notify = { path = "../rusty-kaspa/notify" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+kaspa-wasm = { path = "../rusty-kaspa/wasm" }
+kaspa-wasm-core = { path = "../rusty-kaspa/wasm/core" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client" }
+kaspa-wrpc-wasm = { path = "../rusty-kaspa/rpc/wrpc/wasm" }
+kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
+kaspa-txscript-errors = { path = "../rusty-kaspa/crypto/txscript/errors" }
 
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-consensus-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-hashes = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wasm-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-wrpc-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
-kaspa-txscript-errors = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-consensus-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-hashes = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wasm-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-wrpc-wasm = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
+# kaspa-txscript-errors = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sparkle" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
@@ -137,6 +139,7 @@ cfg-if = "1.0.0"
 chromiumoxide = { version = "0.5.7", features = ["tokio-runtime", "_fetcher-native-tokio"], default-features = false }
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
+cliclack = "0.3.1"
 console = "0.15.8"
 convert_case = "0.6.0"
 ctrlc = "3.4.1"
@@ -156,6 +159,7 @@ mini-moka = "=0.10.3"
 num = "0.4.1"
 num_cpus = "1.16.0"
 once_cell = "1.19.0"
+pad = "0.1.6"
 qrcode = "0.14.0"
 rand = "0.8.5"
 recurly = "48.0.0"

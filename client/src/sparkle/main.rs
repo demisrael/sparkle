@@ -15,10 +15,13 @@ cfg_if::cfg_if! {
     } else {
         pub mod args;
         pub mod client;
+        pub mod wallet;
+        pub mod log;
 
         use client::Client;
         use workflow_log::prelude::*;
         use sparkle_core::runtime::{Runtime, Signals};
+        use sparkle_rs::error::Error;
 
         #[tokio::main]
         async fn main() {
@@ -27,7 +30,10 @@ cfg_if::cfg_if! {
 
             match Client.run(&runtime).await {
                 Ok(_) => log_info!(""),
-                Err(err) => log_error!("Error: {err}"),
+                Err(Error::UserAbort) => {
+                    println!();
+                },
+                Err(err) => { log_error!("Error: {err}") },
             }
         }
 
