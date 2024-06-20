@@ -16,6 +16,7 @@ vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "car
 [dependencies]
 sparkle-core.workspace = true
 sparkle-nexus.workspace = true
+sparkle-database.workspace = true
 sparkle-http-server.workspace = true
 sparkle-rpc-core.workspace = true
 sparkle-rpc-server.workspace = true

@@ -1,0 +1,40 @@
+[package]
+name = "sparkle-database"
+rust-version.workspace = true
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+edition.workspace = true
+include.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+sparkle-core.workspace = true
+# mini-moka.workspace = true
+
+workflow-core.workspace = true
+workflow-log.workspace = true
+
+kaspa-utils.workspace = true
+
+bincode.workspace = true
+cfg-if.workspace = true
+enum-primitive-derive.workspace = true
+faster-hex.workspace = true
+indexmap.workspace = true
+itertools.workspace = true
+num-traits.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+smallvec.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+num_cpus.workspace = true
+rocksdb.workspace = true
