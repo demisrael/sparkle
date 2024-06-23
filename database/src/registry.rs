@@ -9,6 +9,9 @@ pub const SEPARATOR: u8 = u8::MAX;
 pub enum DatabaseStorePrefixes {
     // ---- Consensus ----
     Test = 1,
+    UtxoEntries = 10,
+    Transactions = 11,
+    AcceptingBlockHashToTransaction = 12,
 }
 
 impl From<DatabaseStorePrefixes> for Vec<u8> {

@@ -11,11 +11,13 @@ cfg_if::cfg_if! {
         mod cache;
         mod connection;
         mod db;
-        mod errors;
+        mod error;
+        mod result;
         mod item;
         mod key;
         mod writer;
 
+        pub mod imports;
         pub mod registry;
         mod set_access;
         pub mod utils;
@@ -31,7 +33,8 @@ cfg_if::cfg_if! {
             pub use writer::{BatchDbWriter, DbWriter, DirectDbWriter, DirectWriter, MemoryWriter};
             pub use db::{delete_db, Db};
             pub use connection::ConnBuilder;
-            pub use errors::{StoreError, StoreResult, StoreResultEmptyTuple, StoreResultExtensions};
+            pub use error::{StoreError};
+            pub use result::{StoreResult, StoreResultEmptyTuple, StoreResultExtensions};
         }
 
     }

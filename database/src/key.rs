@@ -1,6 +1,4 @@
-use crate::registry::{DatabaseStorePrefixes, SEPARATOR};
-use smallvec::SmallVec;
-use std::fmt::{Debug, Display};
+use crate::imports::*;
 
 #[derive(Clone)]
 pub struct DbKey {
@@ -74,7 +72,7 @@ impl Display for DbKey {
                 pos += 1;
                 if self.prefix_len > 1 {
                     match prefix {
-                        Test => {
+                        Test | UtxoEntries | Transactions | AcceptingBlockHashToTransaction => {
                             if self.path[1] != SEPARATOR {
                                 // Expected to be a block level so we display as a number
                                 Display::fmt(&self.path[1], f)?;

@@ -1,7 +1,4 @@
-use kaspa_utils::refs::Refs;
-use rocksdb::WriteBatch;
-
-use crate::db::Db;
+use crate::imports::*;
 
 /// Abstraction over direct/batched Db writing
 pub trait DbWriter {

@@ -1,6 +1,4 @@
-use crate::db::Db;
-use rocksdb::{DBWithThreadMode, MultiThreaded};
-use std::{path::PathBuf, sync::Arc};
+use crate::imports::*;
 
 #[derive(Debug)]
 pub struct Unspecified;
@@ -136,12 +134,12 @@ macro_rules! default_opts {
         let guard = kaspa_utils::fd_budget::acquire_guard($self.files_limit)?;
         opts.set_max_open_files($self.files_limit);
         opts.create_if_missing($self.create_if_missing);
-        Ok((opts, guard))
+        StoreResult::Ok((opts, guard))
     }};
 }
 
 impl ConnBuilder<PathBuf, false, Unspecified, i32> {
-    pub fn build(self) -> Result<Arc<Db>, kaspa_utils::fd_budget::Error> {
+    pub fn build(self) -> StoreResult<Arc<Db>> {
         let (opts, guard) = default_opts!(self)?;
         let db = Arc::new(Db::new(
             <DBWithThreadMode<MultiThreaded>>::open(&opts, self.db_path.to_str().unwrap()).unwrap(),
@@ -152,7 +150,7 @@ impl ConnBuilder<PathBuf, false, Unspecified, i32> {
 }
 
 impl ConnBuilder<PathBuf, true, Unspecified, i32> {
-    pub fn build(self) -> Result<Arc<Db>, kaspa_utils::fd_budget::Error> {
+    pub fn build(self) -> StoreResult<Arc<Db>> {
         let (mut opts, guard) = default_opts!(self)?;
         opts.enable_statistics();
         let db = Arc::new(Db::new(
@@ -164,7 +162,7 @@ impl ConnBuilder<PathBuf, true, Unspecified, i32> {
 }
 
 impl ConnBuilder<PathBuf, true, u32, i32> {
-    pub fn build(self) -> Result<Arc<Db>, kaspa_utils::fd_budget::Error> {
+    pub fn build(self) -> StoreResult<Arc<Db>> {
         let (mut opts, guard) = default_opts!(self)?;
         opts.enable_statistics();
         opts.set_report_bg_io_stats(true);
