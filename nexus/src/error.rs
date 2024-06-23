@@ -1,4 +1,5 @@
 use thiserror::Error;
+// use std::thread::JoinError;
 // use wasm_bindgen::JsValue;
 use workflow_core::channel::{ChannelError, RecvError, SendError, TryRecvError, TrySendError};
 
@@ -93,3 +94,10 @@ impl<T> From<ChannelError<T>> for Error {
         Error::ChannelError(err.to_string())
     }
 }
+
+impl<T> From<std::sync::mpsc::SendError<T>> for Error {
+    fn from(err: std::sync::mpsc::SendError<T>) -> Self {
+        Error::custom(err.to_string())
+    }
+}
+

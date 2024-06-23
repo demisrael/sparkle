@@ -1,10 +1,12 @@
 use crate::imports::*;
+// use kaspa_notify::notification::test_helpers::BlockAddedNotification;
 use kaspa_rpc_core::api::ctl::{RpcCtl, RpcState};
+use kaspa_rpc_core::RpcBlock;
 use kaspa_rpc_core::{
     api::ops::RPC_API_VERSION,
     model::{GetServerInfoResponse, RpcTransaction},
     notify::connection::{ChannelConnection, ChannelType},
-    Notification, VirtualChainChangedNotification, VirtualDaaScoreChangedNotification,
+    Notification, VirtualChainChangedNotification, VirtualDaaScoreChangedNotification, BlockAddedNotification,
 };
 use kaspa_wallet_core::rpc::{DynRpcApi, Rpc};
 
@@ -27,6 +29,9 @@ struct Inner {
     current_daa_score: AtomicU64,
     pending: Mutex<Vec<RpcTransaction>>,
 
+    processor: Arc<Processor>,
+    sender: mpsc::Sender<Ingest>,
+
     shutdown: DuplexChannel<()>,
 }
 
@@ -38,6 +43,14 @@ pub struct Nexus {
 
 impl Nexus {
     pub async fn try_new(network_id: NetworkId, url: Option<&str>) -> Result<Self> {
+
+        println!("NEXUS init...");
+        println!("PROCESSOR init...");
+        let processor = Arc::new(Processor::try_new()?);
+        let sender = processor.sender();
+        
+        println!("PROCESSOR init done...");
+
         // for now use the default public node infrastructure
         let resolver = Resolver::default();
         let rpc_client = Arc::new(KaspaRpcClient::new_with_args(
@@ -63,6 +76,8 @@ impl Nexus {
                 is_synced: AtomicBool::new(false),
                 current_daa_score: AtomicU64::new(0),
                 pending: Mutex::new(Vec::new()),
+                processor,
+                sender,
                 shutdown: DuplexChannel::oneshot(),
             }),
         })
@@ -116,6 +131,14 @@ impl Nexus {
             .clone()
             .downcast_arc::<KaspaRpcClient>()
             .expect("downcast to KaspaRpcClient")
+    }
+
+    pub fn processor(&self) -> &Arc<Processor> {
+        &self.inner.processor
+    }
+
+    pub fn sender(&self) -> &mpsc::Sender<Ingest> {
+        &self.inner.sender
     }
 
     /// Signifies **valid and negotiated** connection to the node.
@@ -302,25 +325,42 @@ impl Nexus {
             }
 
             Notification::BlockAdded(block_added_notification) => {
+
+                let BlockAddedNotification { block } = block_added_notification;
+
+                let block = Arc::try_unwrap(block).expect("Unable to unwrap block in BlockAddedNotification");
+
+                let RpcBlock { header, transactions, verbose_data } = block;
+
                 // Skip coinbase tx
-                for tx in block_added_notification.block.transactions.iter().skip(1) {
-                    self.handle_transaction(tx).await?;
+                // for tx in block_added_notification.block.transactions.iter().skip(1) {
+                // for tx in transactions.into_iter().skip(1) {
+                for tx in transactions.into_iter() {
+                    self.handle_transaction(tx)?;
                 }
 
                 self.drain().await?;
             }
 
             Notification::VirtualChainChanged(virtual_chain_changed_notification) => {
-                let VirtualChainChangedNotification {
-                    removed_chain_block_hashes,
-                    added_chain_block_hashes,
-                    accepted_transaction_ids,
-                } = virtual_chain_changed_notification;
 
-                // TODO - TBD
-                removed_chain_block_hashes.iter().for_each(|_hash| {});
-                added_chain_block_hashes.iter().for_each(|_hash| {});
-                accepted_transaction_ids.iter().for_each(|_txid| {});
+                // self.inner
+                //     .sender
+                //     .send(Ingest::VirtualChainChanged(virtual_chain_changed_notification.into()));
+
+                self.handle_virtual_chanin_changed(virtual_chain_changed_notification)?;
+                    // .await?;
+
+                // let VirtualChainChangedNotification {
+                //     removed_chain_block_hashes,
+                //     added_chain_block_hashes,
+                //     accepted_transaction_ids,
+                // } = virtual_chain_changed_notification;
+
+                // // TODO - TBD
+                // removed_chain_block_hashes.iter().for_each(|_hash| {});
+                // added_chain_block_hashes.iter().for_each(|_hash| {});
+                // accepted_transaction_ids.iter().for_each(|_txid| {});
                 // println!("VirtualChainChanged: {:?}", virtual_chain_changed_notification);
             }
 
@@ -352,25 +392,36 @@ impl Nexus {
     }
 
     #[inline]
-    async fn handle_transaction(&self, transaction: &RpcTransaction) -> Result<()> {
+    fn handle_transaction(&self, transaction: RpcTransaction) -> Result<()> {
         // TODO
         // Ignore standard transactions
         // Place protocol transactions into a pending queue
 
-        let Some(txid) = transaction
-            .verbose_data
-            .as_ref()
-            .map(|data| data.transaction_id)
-        else {
-            return Ok(());
-        };
+        self.sender().send(Ingest::Transaction(transaction.into()))?;
 
-        // just some fake pre-selection logic
-        if txid.as_bytes()[0] < 200 {
-            return Ok(());
-        } else {
-            self.inner.pending.lock().unwrap().push(transaction.clone());
-        }
+
+        // let Some(txid) = transaction
+        //     .verbose_data
+        //     .as_ref()
+        //     .map(|data| data.transaction_id)
+        // else {
+        //     return Ok(());
+        // };
+
+        // // just some fake pre-selection logic
+        // if txid.as_bytes()[0] < 200 {
+        //     return Ok(());
+        // } else {
+        //     self.inner.pending.lock().unwrap().push(transaction.clone());
+        // }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn handle_virtual_chanin_changed(&self, notification: VirtualChainChangedNotification) -> Result<()> {
+        // TODO
+        self.sender().send(Ingest::VirtualChainChanged(notification.into()))?;
 
         Ok(())
     }
@@ -527,8 +578,10 @@ const SERVICE: &str = "NEXUS";
 
 #[async_trait]
 impl Service for Nexus {
-    async fn spawn(self: Arc<Self>, _runtime: Runtime) -> ServiceResult<()> {
+    async fn spawn(self: Arc<Self>, runtime: Runtime) -> ServiceResult<()> {
         // log_trace!("starting {SERVICE}...");
+
+        self.inner.processor.clone().spawn(runtime.clone()).await?;
 
         self.connect()
             .await
@@ -546,10 +599,15 @@ impl Service for Nexus {
     fn terminate(self: Arc<Self>) {
         // log_trace!("sending an exit signal to {SERVICE}");
         self.inner.shutdown.request.try_send(()).unwrap();
+
+        self.inner.processor.clone().terminate();
     }
 
     async fn join(self: Arc<Self>) -> ServiceResult<()> {
         self.inner.shutdown.response.recv().await?;
+
+        self.inner.processor.clone().join().await?;
+
         Ok(())
     }
 }

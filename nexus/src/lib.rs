@@ -9,6 +9,8 @@ cfg_if::cfg_if! {
         pub mod event;
         pub mod analyzer;
         pub mod result;
+        pub mod processor;
+        pub mod utils;
 
         pub mod prelude {
             pub use crate::nexus::Nexus;
