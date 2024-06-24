@@ -4586,6 +4586,7 @@ dependencies = [
  "faster-hex 0.9.0",
  "futures",
  "futures-util",
+ "hex",
  "hex-literal",
  "itertools 0.13.0",
  "kaspa-addresses",

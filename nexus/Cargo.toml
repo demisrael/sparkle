@@ -42,6 +42,7 @@ thiserror.workspace = true
 hex-literal.workspace = true
 evm.workspace = true
 primitive-types.workspace = true
+hex.workspace = true
 
 workflow-core.workspace = true
 workflow-log.workspace = true
