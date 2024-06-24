@@ -39,6 +39,9 @@ mini-moka.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+hex-literal.workspace = true
+evm.workspace = true
+primitive-types.workspace = true
 
 workflow-core.workspace = true
 workflow-log.workspace = true
