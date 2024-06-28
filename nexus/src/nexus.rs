@@ -401,22 +401,22 @@ impl Nexus {
         // Place protocol transactions into a pending queue
 
         self.sender()
-            .send(Ingest::Transaction(transaction.into()))?;
+            .send(Ingest::Transaction(transaction.clone().into()))?;
 
-        // let Some(txid) = transaction
-        //     .verbose_data
-        //     .as_ref()
-        //     .map(|data| data.transaction_id)
-        // else {
-        //     return Ok(());
-        // };
+        let Some(txid) = transaction
+            .verbose_data
+            .as_ref()
+            .map(|data| data.transaction_id)
+        else {
+            return Ok(());
+        };
 
-        // // just some fake pre-selection logic
-        // if txid.as_bytes()[0] < 200 {
-        //     return Ok(());
-        // } else {
-        //     self.inner.pending.lock().unwrap().push(transaction.clone());
-        // }
+        // just some fake pre-selection logic
+        if txid.as_bytes()[0] < 200 {
+            return Ok(());
+        } else {
+            self.inner.pending.lock().unwrap().push(transaction.clone());
+        }
 
         Ok(())
     }

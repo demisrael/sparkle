@@ -75,7 +75,7 @@ impl Client {
                         let wallet = Wallet::try_new(ctx, true).await?;
                         // wallet.wallet.utxo_processor();
                         log_info!("{:#?}", wallet.account);
-                        wallet.incomplete_reveal().await;
+                        wallet.demo_deploy().await;
                     }
                 }
             }
