@@ -68,6 +68,7 @@ sparkle-macros = { path = "macros" }
 kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
 kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
 kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-consensus-client = { path = "../rusty-kaspa/consensus/client" }
 kaspa-consensus-wasm = { path = "../rusty-kaspa/consensus/wasm" }
 kaspa-hashes = { path = "../rusty-kaspa/crypto/hashes" }
 kaspa-notify = { path = "../rusty-kaspa/notify" }
