@@ -1,10 +1,17 @@
 use cliclack::log;
+use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
+use kaspa_wallet_core::prelude::AccountsSendRequest;
 use kaspa_wallet_core::prelude::{
     AccountDescriptor, AccountId, ConnectRequest, Wallet as CoreWallet, WalletDescriptor,
 };
+use kaspa_wallet_core::tx::PaymentOutputs;
 use pad::{Alignment, PadStr};
+use sparkle_core::inscription::deploy_demo;
 use sparkle_rs::imports::*;
+use sparkle_rs::monitor::monitor;
 use sparkle_rs::result::Result;
+#[cfg(not(target_arch = "wasm32"))]
+use tokio::task::JoinHandle;
 
 mod account;
 use account::Account;
@@ -176,5 +183,48 @@ impl Wallet {
         let account = account_map.get(&account_id).cloned(); //.unwrap().cloned();
 
         Ok(Self { wallet, account })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub async fn demo_commit(&self) {
+        let amount_sompi = SOMPI_PER_KASPA;
+        let priority_fee_sompi = SOMPI_PER_KASPA;
+        let account = self.account.clone().unwrap();
+        let recipient = account.receive_address.clone().unwrap();
+        let redeem_lock = deploy_demo(recipient.clone());
+        let dest = redeem_lock.clone();
+
+        let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
+            if let Err(e) = monitor(dest.clone()).await {
+                eprintln!("Error in monitor: {}", e);
+            }
+        });
+
+        let output = PaymentOutputs::from((redeem_lock, amount_sompi));
+
+        let send_request = AccountsSendRequest {
+            account_id: account.account_id,
+            wallet_secret: "111".into(),
+            payment_secret: None,
+            destination: output.into(),
+            priority_fee_sompi: priority_fee_sompi.into(),
+            payload: None,
+        };
+        self.wallet
+            .as_api()
+            .accounts_send(send_request)
+            .await
+            .unwrap();
+
+        match monitor_handle.await {
+            Ok(_) => println!("Monitor task completed successfully"),
+            Err(e) => eprintln!("Monitor task failed: {:?}", e),
+        }
+    }
+
+    pub async fn incomplete_reveal(&self) {
+        let account = self.account.clone().unwrap();
+        let recipient = account.receive_address.clone().unwrap();
+        let _input_lock_address = deploy_demo(recipient.clone());
     }
 }

@@ -6,7 +6,8 @@ use kaspa_rpc_core::{
     api::ops::RPC_API_VERSION,
     model::{GetServerInfoResponse, RpcTransaction},
     notify::connection::{ChannelConnection, ChannelType},
-    Notification, VirtualChainChangedNotification, VirtualDaaScoreChangedNotification, BlockAddedNotification,
+    BlockAddedNotification, Notification, VirtualChainChangedNotification,
+    VirtualDaaScoreChangedNotification,
 };
 use kaspa_wallet_core::rpc::{DynRpcApi, Rpc};
 
@@ -43,12 +44,11 @@ pub struct Nexus {
 
 impl Nexus {
     pub async fn try_new(network_id: NetworkId, url: Option<&str>) -> Result<Self> {
-
         println!("NEXUS init...");
         println!("PROCESSOR init...");
         let processor = Arc::new(Processor::try_new()?);
         let sender = processor.sender();
-        
+
         println!("PROCESSOR init done...");
 
         // for now use the default public node infrastructure
@@ -325,12 +325,16 @@ impl Nexus {
             }
 
             Notification::BlockAdded(block_added_notification) => {
-
                 let BlockAddedNotification { block } = block_added_notification;
 
-                let block = Arc::try_unwrap(block).expect("Unable to unwrap block in BlockAddedNotification");
+                let block = Arc::try_unwrap(block)
+                    .expect("Unable to unwrap block in BlockAddedNotification");
 
-                let RpcBlock { header, transactions, verbose_data } = block;
+                let RpcBlock {
+                    header,
+                    transactions,
+                    verbose_data,
+                } = block;
 
                 // Skip coinbase tx
                 // for tx in block_added_notification.block.transactions.iter().skip(1) {
@@ -343,13 +347,12 @@ impl Nexus {
             }
 
             Notification::VirtualChainChanged(virtual_chain_changed_notification) => {
-
                 // self.inner
                 //     .sender
                 //     .send(Ingest::VirtualChainChanged(virtual_chain_changed_notification.into()));
 
-                self.handle_virtual_chanin_changed(virtual_chain_changed_notification)?;
-                    // .await?;
+                self.handle_virtual_chain_changed(virtual_chain_changed_notification)?;
+                // .await?;
 
                 // let VirtualChainChangedNotification {
                 //     removed_chain_block_hashes,
@@ -397,8 +400,8 @@ impl Nexus {
         // Ignore standard transactions
         // Place protocol transactions into a pending queue
 
-        self.sender().send(Ingest::Transaction(transaction.into()))?;
-
+        self.sender()
+            .send(Ingest::Transaction(transaction.into()))?;
 
         // let Some(txid) = transaction
         //     .verbose_data
@@ -419,9 +422,13 @@ impl Nexus {
     }
 
     #[inline]
-    fn handle_virtual_chanin_changed(&self, notification: VirtualChainChangedNotification) -> Result<()> {
+    fn handle_virtual_chain_changed(
+        &self,
+        notification: VirtualChainChangedNotification,
+    ) -> Result<()> {
         // TODO
-        self.sender().send(Ingest::VirtualChainChanged(notification.into()))?;
+        self.sender()
+            .send(Ingest::VirtualChainChanged(notification.into()))?;
 
         Ok(())
     }

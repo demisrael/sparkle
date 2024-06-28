@@ -100,4 +100,3 @@ impl<T> From<std::sync::mpsc::SendError<T>> for Error {
         Error::custom(err.to_string())
     }
 }
-
