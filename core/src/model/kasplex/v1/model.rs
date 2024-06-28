@@ -345,44 +345,58 @@ pub mod krc20 {
         pub tick: String,
 
         #[serde_as(as = "Option<DisplayFromStr>")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub max: Option<u128>,
 
-        #[serde(rename = "Option<lim>")]
+        #[serde(rename = "lim")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<u128>,
 
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub dec: Option<u64>,
 
         #[serde_as(as = "Option<DisplayFromStr>")]
         #[serde(rename = "amt")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub amount: Option<u128>,
 
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub from: Option<String>,
 
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub to: Option<String>,
 
         #[serde_as(as = "Option<DisplayFromStr>")]
-        #[serde(rename = "Option<opScore>")]
+        #[serde(rename = "opScore")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub op_score: Option<u64>,
 
         #[serde(rename = "hashRev")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub hash_rev: Option<Hash>,
 
         #[serde(rename = "feeRev")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub fee_rev: Option<String>,
 
         #[serde(rename = "txAccept")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub tx_accept: Option<String>,
 
         #[serde(rename = "opAccept")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub op_accept: Option<String>,
 
         #[serde(rename = "opError")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub op_error: Option<String>,
 
         #[serde(rename = "mtsAdd")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub mts_add: Option<String>,
 
         #[serde(rename = "mtsMod")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub mts_mod: Option<String>,
     }
 
