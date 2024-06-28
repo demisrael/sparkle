@@ -21,8 +21,8 @@ pub use futures::{pin_mut, select, select_biased, FutureExt, Stream, StreamExt, 
 pub use futures_util::future::{join_all, try_join_all};
 pub use itertools::Itertools;
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
-pub use tokio::task::spawn_blocking;
 pub use std::sync::mpsc;
+pub use tokio::task::spawn_blocking;
 
 pub use workflow_core::channel::{oneshot, Channel, DuplexChannel, Multiplexer, Receiver, Sender};
 pub use workflow_core::task;
@@ -51,7 +51,7 @@ pub use crate::context::ContextT;
 pub use crate::error::Error;
 pub use crate::event::Event;
 pub use crate::nexus::Nexus;
-pub use crate::processor::{Processor, Ingest};
+pub use crate::processor::{Ingest, Processor};
 // pub use crate::operations::{deserialize, BaseData};
 pub use crate::result::Result;
 pub use crate::utils::*;
