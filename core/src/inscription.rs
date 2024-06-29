@@ -48,9 +48,10 @@ fn redeem_pubkey(redeem_script: &[u8], pubkey: &[u8]) -> ScriptBuilderResult<Vec
         .add_op(OpFalse)?
         .add_op(OpIf)?
         .add_data(PROTOCOL_NAMESPACE.as_bytes())?
-        .add_data(&[0])?
+        // .add_data(&[0])?
+        .add_i64(0)?
         .add_data("".as_bytes())?
-        .add_data(&[1])?
+        .add_i64(1)?
         .add_data(redeem_script)?
         .add_op(OpEndIf)?
         .drain())
@@ -62,8 +63,9 @@ pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
         op: "deploy".to_string(),
         tick: "TOITOI".to_string(),
         max: Some(21000000000),
-        limit: Some(3010000),
-        dec: None,
+        limit: Some(30100000),
+        pre: Some(0),
+        dec: Some(2),
         amount: None,
         from: None,
         to: None,
@@ -96,6 +98,7 @@ pub fn mint_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
         tick: "TOITOI".to_string(),
         max: None,
         limit: None,
+        pre: None,
         dec: None,
         amount: None,
         from: None,

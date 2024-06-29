@@ -49,13 +49,18 @@ impl Analyzer {
                             match &*msg {
                                 Event::Transaction { transaction } => {
 
-                                    if let Some(op) = detect_krc20(transaction){
+                                    if let Some(token) = detect_krc20(transaction){
 
-                                        // Debug
-                                        if op.op.to_lowercase() == "deploy".to_string() {
-                                            println!("Found deploy");
-                                            dbg!(op);
+                                        if token.clone().tick.to_lowercase() == "toitoi".to_string() {
+                                            println!("Filter tick");
+                                            dbg!(token.clone());
                                         }
+                                        // Debug
+                                        if token.clone().op.to_lowercase() == "deploy".to_string() {
+                                            println!("Filter deploy");
+                                            dbg!(token.clone());
+                                        }
+
                                     }
                                     // let txid = transaction.verbose_data.as_ref().map(|data| data.transaction_id.to_string()).unwrap_or_else(||"N/A".to_string());
                                     // println!("Received transaction: {txid}");
@@ -244,14 +249,21 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
                             if let Some(Ok(second_to_last_opcode)) =
                                 inner_opcodes.get(inner_opcodes.len() - 2)
                             {
+                                // ascii_debug_payload(second_to_last_opcode.get_data());
                                 
                                 match from_slice::<TokenTransaction>(second_to_last_opcode.get_data()) {
                                     Ok(token_transaction) => {
                                         
+                                        
+                                        // Debug
+                                        if token_transaction.op.to_lowercase() == "transfer" {
+                                            ascii_debug_payload(opcode.get_data());
+                                        }
                                         // Debug
                                         if token_transaction.op.to_lowercase() == "deploy" {
                                             ascii_debug_payload(opcode.get_data());
-                                        }     // Debug
+                                        }
+                                        // Debug
                                         if token_transaction.tick.to_lowercase() == "toitoi" {
                                             ascii_debug_payload(opcode.get_data());
                                         }

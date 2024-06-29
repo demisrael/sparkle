@@ -284,15 +284,15 @@ impl Wallet {
         use sparkle_core::inscription::mint_token_demo;
 
         let (secret_key, public_key) = demo_keypair();
-        let payback_amount = 2 * SOMPI_PER_KASPA;
+        let payback_amount = 5 * SOMPI_PER_KASPA;
 
         // Deploy fee
-        let reveal_fee = 2 * SOMPI_PER_KASPA;
+        let reveal_fee = 3 * SOMPI_PER_KASPA;
         
         // Total amount: reveal fee and payback amount
         let commit_total_amount = reveal_fee + payback_amount;
 
-        let commit_fee = SOMPI_PER_KASPA;
+        let commit_fee = 2 * SOMPI_PER_KASPA;
         let account = self.account.clone().unwrap();
         let recipient = account.receive_address.clone().unwrap();
         println!("Destination address {}", recipient.clone());
@@ -318,6 +318,8 @@ impl Wallet {
         .accounts_send(send_request)
         .await
         .unwrap();
+
+    // InsufficientFunds 
     
     // Wait for commit UTXO
         match monitor_handle.await {
