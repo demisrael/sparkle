@@ -331,9 +331,9 @@ impl Nexus {
                     .expect("Unable to unwrap block in BlockAddedNotification");
 
                 let RpcBlock {
-                    header,
+                    header: _,
                     transactions,
-                    verbose_data,
+                    verbose_data: _,
                 } = block;
 
                 // Skip coinbase tx

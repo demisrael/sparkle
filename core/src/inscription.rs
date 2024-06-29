@@ -3,24 +3,28 @@ use crate::model::kasplex::v1::krc20::TokenTransaction;
 use crate::model::kasplex::v1::Protocol;
 
 use kaspa_addresses::Address;
+use kaspa_consensus_client::UtxoEntry as ClientUTXO;
+use kaspa_consensus_core::sign::sign;
+use kaspa_consensus_core::subnets::SubnetworkId;
+use kaspa_consensus_core::tx::{
+    MutableTransaction, Transaction, TransactionInput, TransactionOutpoint, TransactionOutput,
+    UtxoEntry,
+};
 use kaspa_hashes::Hash;
 use kaspa_txscript::opcodes::codes::*;
 use kaspa_txscript::script_builder::{ScriptBuilder, ScriptBuilderResult};
-use kaspa_txscript::{extract_script_pub_key_address, pay_to_script_hash_script, pay_to_script_hash_signature_script, pay_to_address_script};
+use kaspa_txscript::{
+    extract_script_pub_key_address, pay_to_address_script, pay_to_script_hash_script,
+    pay_to_script_hash_signature_script,
+};
+use kaspa_wallet_core::tx::{
+    Generator, GeneratorSettings, PaymentDestination, PaymentOutputs, PendingTransaction,
+};
+use kaspa_wallet_core::utxo::UtxoEntryReference;
+use kaspa_wrpc_client::prelude::*;
 use secp256k1::{rand, Secp256k1, SecretKey};
 use std::str::FromStr;
-use kaspa_consensus_core::sign::sign;
-use kaspa_consensus_core::tx::{
-    MutableTransaction, Transaction, TransactionInput,
-    TransactionOutpoint, TransactionOutput, UtxoEntry,
-};
-use kaspa_consensus_core::subnets::SubnetworkId;
-use kaspa_wrpc_client::prelude::*;
-use kaspa_wallet_core::tx::{PaymentOutputs, GeneratorSettings, PaymentDestination, PendingTransaction, Generator};
 use std::sync::Arc;
-use kaspa_wallet_core::utxo::UtxoEntryReference;
-use kaspa_consensus_client::UtxoEntry as ClientUTXO;
-
 
 pub fn demo_keypair() -> (secp256k1::SecretKey, secp256k1::PublicKey) {
     let secp = Secp256k1::new();
@@ -29,13 +33,16 @@ pub fn demo_keypair() -> (secp256k1::SecretKey, secp256k1::PublicKey) {
 }
 
 pub fn ascii_debug_payload(script_sig: &[u8]) {
-    let ascii_string: String = script_sig.iter().map(|&b| {
-        if b.is_ascii() {
-            b as char
-        } else {
-            '.'  // Replace non-ASCII bytes with a placeholder
-        }
-    }).collect();
+    let ascii_string: String = script_sig
+        .iter()
+        .map(|&b| {
+            if b.is_ascii() {
+                b as char
+            } else {
+                '.' // Replace non-ASCII bytes with a placeholder
+            }
+        })
+        .collect();
     println!();
     println!("Envelope debug: {}", ascii_string);
     println!();
@@ -87,7 +94,8 @@ pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
 
     let redeem_lock_p2sh = pay_to_script_hash_script(&script_sig);
 
-    let p2sh = extract_script_pub_key_address(&redeem_lock_p2sh, "kaspatest".try_into().unwrap()).unwrap();
+    let p2sh =
+        extract_script_pub_key_address(&redeem_lock_p2sh, "kaspatest".try_into().unwrap()).unwrap();
     (p2sh, script_sig)
 }
 
@@ -121,15 +129,20 @@ pub fn mint_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
 
     let redeem_lock_p2sh = pay_to_script_hash_script(&script_sig);
 
-    let p2sh = extract_script_pub_key_address(&redeem_lock_p2sh, "kaspatest".try_into().unwrap()).unwrap();
+    let p2sh =
+        extract_script_pub_key_address(&redeem_lock_p2sh, "kaspatest".try_into().unwrap()).unwrap();
     (p2sh, script_sig)
 }
 
-pub fn reveal_transaction(script_sig: Vec<u8>, recipient: Address,
-    secret_key: SecretKey, prev_tx_tid: Hash,
-    prev_tx_score: u64, payback_amount: u64, reveal_fee: u64)
--> (PendingTransaction, Vec<UtxoEntry>, Transaction) {
-
+pub fn reveal_transaction(
+    script_sig: Vec<u8>,
+    recipient: Address,
+    secret_key: SecretKey,
+    prev_tx_tid: Hash,
+    prev_tx_score: u64,
+    payback_amount: u64,
+    reveal_fee: u64,
+) -> (PendingTransaction, Vec<UtxoEntry>, Transaction) {
     let entry_total_amount = payback_amount + reveal_fee;
     let redeem_lock_p2sh = pay_to_script_hash_script(&script_sig);
 
@@ -144,12 +157,10 @@ pub fn reveal_transaction(script_sig: Vec<u8>, recipient: Address,
             sequence: 0,
             sig_op_count: 1, // when signed it turns into 1
         }],
-        vec![
-            TransactionOutput {
-                value: payback_amount,
-                script_public_key: pay_to_address_script(&recipient),
-            },
-        ],
+        vec![TransactionOutput {
+            value: payback_amount,
+            script_public_key: pay_to_address_script(&recipient),
+        }],
         0,
         SubnetworkId::from_byte(0),
         0,
@@ -182,12 +193,14 @@ pub fn reveal_transaction(script_sig: Vec<u8>, recipient: Address,
         .clone_from(&script_sig);
     signed_tx.tx.inputs[0].signature_script = script_sig;
 
-
     let network_id = NetworkId::from_str("testnet-11").unwrap();
     let utxo_entry = ClientUTXO {
         address: None,
-        outpoint: TransactionOutpoint { transaction_id: prev_tx_tid,
-            index: 0}.into(),
+        outpoint: TransactionOutpoint {
+            transaction_id: prev_tx_tid,
+            index: 0,
+        }
+        .into(),
         amount: entry_total_amount,
         script_public_key: redeem_lock_p2sh.clone(),
         block_daa_score: prev_tx_score,
@@ -199,15 +212,18 @@ pub fn reveal_transaction(script_sig: Vec<u8>, recipient: Address,
     let multiplexer = None;
     let sig_op_count = 1;
     let minimum_signatures = 1;
-    let utxo_iterator: Box<dyn Iterator<Item = UtxoEntryReference> + Send + Sync + 'static> = Box::new(utxo_entries.into_iter());
+    let utxo_iterator: Box<dyn Iterator<Item = UtxoEntryReference> + Send + Sync + 'static> =
+        Box::new(utxo_entries.into_iter());
     let source_utxo_context = None;
     let destination_utxo_context = None;
     let final_priority_fee = reveal_fee.into();
     let final_transaction_payload = None;
     let change_address: Address = recipient.clone();
 
-    let final_transaction_destination = 
-        PaymentDestination::PaymentOutputs(PaymentOutputs::from((recipient.clone(), payback_amount)));
+    let final_transaction_destination = PaymentDestination::PaymentOutputs(PaymentOutputs::from((
+        recipient.clone(),
+        payback_amount,
+    )));
 
     let settings = GeneratorSettings {
         network_id,
@@ -224,75 +240,92 @@ pub fn reveal_transaction(script_sig: Vec<u8>, recipient: Address,
     };
     let generator = Generator::try_new(settings, None, None).unwrap();
 
-    let utxo_entry_ref_from_ref: Vec<UtxoEntryReference> = vec![UtxoEntryReference{utxo: Arc::new(utxo_entry.to_owned())}];
+    let utxo_entry_ref_from_ref: Vec<UtxoEntryReference> = vec![UtxoEntryReference {
+        utxo: Arc::new(utxo_entry.to_owned()),
+    }];
 
-    (PendingTransaction::try_new(
-        &generator,
-        signed_tx.tx,
-        utxo_entry_ref_from_ref,
-        vec![recipient].into_iter().collect(),
-        Some(payback_amount),
-        0,
-        0,
-        0,
-        reveal_fee,
-        reveal_fee,
-        kaspa_wallet_core::tx::DataKind::Final,
-    ).unwrap(), entries, unsigned_tx)
+    (
+        PendingTransaction::try_new(
+            &generator,
+            signed_tx.tx,
+            utxo_entry_ref_from_ref,
+            vec![recipient].into_iter().collect(),
+            Some(payback_amount),
+            0,
+            0,
+            0,
+            reveal_fee,
+            reveal_fee,
+            kaspa_wallet_core::tx::DataKind::Final,
+        )
+        .unwrap(),
+        entries,
+        unsigned_tx,
+    )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kaspa_consensus_core::tx::TransactionId;
     use kaspa_addresses::{Address, Prefix};
     use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
     use kaspa_consensus_core::hashing::sighash::SigHashReusedValues;
+    use kaspa_consensus_core::tx::TransactionId;
+    use kaspa_consensus_core::tx::VerifiableTransaction;
     use kaspa_txscript::caches::Cache;
     use kaspa_txscript::SigCacheKey;
     use kaspa_txscript::TxScriptEngine;
     use kaspa_txscript_errors::TxScriptError;
-    use kaspa_consensus_core::tx::VerifiableTransaction;
 
     #[test]
     pub fn test_and_verify_sign() {
-
         let (secret_key, public_key) = demo_keypair();
         // let pubkey = ScriptVec::from_slice(&public_key.serialize());
-        let test_address = Address::new(Prefix::Testnet, kaspa_addresses::Version::PubKey, &public_key.x_only_public_key().0.serialize());
+        let test_address = Address::new(
+            Prefix::Testnet,
+            kaspa_addresses::Version::PubKey,
+            &public_key.x_only_public_key().0.serialize(),
+        );
 
         let (_, script_sig) = deploy_token_demo(&public_key);
         let priority_fee_sompi = SOMPI_PER_KASPA;
 
-        let prev_tx_id =
-            TransactionId::from_str("770eb9819a31821d9d2399e2f35e2433b72637e393d71ecc9b8d0250f49153c3")
-                .unwrap();
+        let prev_tx_id = TransactionId::from_str(
+            "770eb9819a31821d9d2399e2f35e2433b72637e393d71ecc9b8d0250f49153c3",
+        )
+        .unwrap();
 
         let test_daa_score = 30310;
-        let (_, entries, unsigned_tx) = 
-            reveal_transaction(script_sig, test_address, secret_key, prev_tx_id, test_daa_score, priority_fee_sompi, priority_fee_sompi);
+        let (_, entries, unsigned_tx) = reveal_transaction(
+            script_sig,
+            test_address,
+            secret_key,
+            prev_tx_id,
+            test_daa_score,
+            priority_fee_sompi,
+            priority_fee_sompi,
+        );
 
-        let tx =
-            MutableTransaction::with_entries(unsigned_tx, entries);
+        let tx = MutableTransaction::with_entries(unsigned_tx, entries);
 
         let tx = tx.as_verifiable();
         let cache: Cache<SigCacheKey, bool> = Cache::new(10_000);
         let mut reused_values = SigHashReusedValues::new();
 
         let script_run: Result<(), TxScriptError> =
-        tx.populated_inputs()
-            .enumerate()
-            .try_for_each(|(idx, (input, entry))| {
-                TxScriptEngine::from_transaction_input(
-                    &tx,
-                    input,
-                    idx,
-                    entry,
-                    &mut reused_values,
-                    &cache,
-                )?
-                .execute()
-            });
+            tx.populated_inputs()
+                .enumerate()
+                .try_for_each(|(idx, (input, entry))| {
+                    TxScriptEngine::from_transaction_input(
+                        &tx,
+                        input,
+                        idx,
+                        entry,
+                        &mut reused_values,
+                        &cache,
+                    )?
+                    .execute()
+                });
 
         eprintln!("{:?}", script_run.clone().err());
         assert!(script_run.is_ok());
