@@ -4,6 +4,7 @@ pub mod error;
 pub mod hash;
 pub mod id;
 pub mod imports;
+pub mod inscription;
 pub mod model;
 pub mod prelude;
 pub mod result;

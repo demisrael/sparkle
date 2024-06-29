@@ -2,12 +2,11 @@ use crate::imports::*;
 // use std::sync::mpsc;
 use std::thread;
 // use workflow_core::
+use kaspa_rpc_core::{
+    VirtualChainChangedNotification, //, BlockAddedNotification,
+};
 use sparkle_database::prelude::*;
 use std::fs;
-use kaspa_rpc_core::{
-    VirtualChainChangedNotification//, BlockAddedNotification,
-};
-
 
 pub enum Ingest {
     // NoOp,

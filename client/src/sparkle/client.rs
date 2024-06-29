@@ -73,8 +73,10 @@ impl Client {
                 match action {
                     WalletAction::Test => {
                         let wallet = Wallet::try_new(ctx, true).await?;
-
+                        // wallet.wallet.utxo_processor();
                         log_info!("{:#?}", wallet.account);
+                        wallet.demo_deploy().await;
+                        // wallet.demo_mint().await;
                     }
                 }
             }

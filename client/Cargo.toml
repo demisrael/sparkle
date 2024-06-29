@@ -79,6 +79,7 @@ thiserror.workspace = true
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true
 web-sys.workspace = true
+async-channel = "2.3.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 kaspa-wasm.workspace = true
