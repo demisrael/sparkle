@@ -334,7 +334,7 @@ pub mod krc20 {
     //     }
     // }
     #[serde_as]
-    #[derive(Debug, Deserialize, Serialize, PartialEq)]
+    #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
     pub struct TokenTransaction {
         #[serde_as(as = "DisplayFromStr")]
         #[serde(rename = "p")]
@@ -359,6 +359,10 @@ pub mod krc20 {
         #[serde(rename = "amt")]
         #[serde(skip_serializing_if = "Option::is_none")]
         pub amount: Option<u128>,
+
+        #[serde_as(as = "Option<DisplayFromStr>")]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub pre: Option<u128>,
 
         #[serde(skip_serializing_if = "Option::is_none")]
         pub from: Option<String>,
@@ -443,6 +447,7 @@ pub mod krc20 {
         tick: String,
         max: Option<u128>,
         limit: Option<u128>,
+        pre: Option<u128>,
         dec: Option<u64>,
         amount: Option<u128>,
         from: Option<String>,
@@ -465,6 +470,7 @@ pub mod krc20 {
                 tick,
                 max: None,
                 limit: None,
+                pre: None,
                 dec: None,
                 amount: None,
                 from: None,
@@ -507,6 +513,7 @@ pub mod krc20 {
                 tick: self.tick,
                 max: self.max,
                 limit: self.limit,
+                pre: self.pre,
                 dec: self.dec,
                 amount: self.amount,
                 from: self.from,
