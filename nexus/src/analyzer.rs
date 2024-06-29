@@ -1,4 +1,5 @@
 use crate::imports::*;
+use sparkle_core::inscription::{ascii_debug_payload};
 use serde_json::from_slice;
 // use kaspa_rpc_core::model::*;
 
@@ -49,8 +50,12 @@ impl Analyzer {
                                 Event::Transaction { transaction } => {
 
                                     if let Some(op) = detect_krc20(transaction){
-                                        println!("Found KRC-20");
-                                        dbg!(op);
+
+                                        // Debug
+                                        if op.op.to_lowercase() == "deploy".to_string() {
+                                            println!("Found deploy");
+                                            dbg!(op);
+                                        }
                                     }
                                     // let txid = transaction.verbose_data.as_ref().map(|data| data.transaction_id.to_string()).unwrap_or_else(||"N/A".to_string());
                                     // println!("Received transaction: {txid}");
@@ -108,14 +113,15 @@ impl Service for Analyzer {
 #[inline]
 fn window_find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     // Ensure we don't start beyond the end of the haystack
-    if haystack.len() <= 30 {
+    let offset = 10;
+    if haystack.len() <= offset {
         return None;
     }
 
-    // Optization: iterate starting from the 30th byte
-    for (position, window) in haystack[30..].windows(needle.len()).enumerate() {
+    // Optization: iterate starting from the nth byte
+    for (position, window) in haystack[offset..].windows(needle.len()).enumerate() {
         if window == needle {
-            return Some(position + 30); // Adjust the position to account for the 30 byte offset
+            return Some(position + offset); // Adjust the position to account for the byte offset
         }
     }
     None
@@ -131,6 +137,8 @@ fn parse_script<T: VerifiableTransaction>(
 pub trait ITransaction {
     fn signature_script(&self) -> Option<&[u8]>;
     fn rcv(&self) -> Address;
+    fn mass(&self) -> u64;
+    fn gas(&self) -> u64;
 }
 
 impl ITransaction for &RpcTransaction {
@@ -144,6 +152,12 @@ impl ITransaction for &RpcTransaction {
         )
         .unwrap()
     }
+    fn mass(&self) -> u64 {
+        return self.mass;
+    }
+    fn gas(&self) -> u64 {
+        return self.gas;
+    }
 }
 
 impl ITransaction for &Transaction {
@@ -156,6 +170,12 @@ impl ITransaction for &Transaction {
             Prefix::try_from("kaspatest").unwrap(),
         )
         .unwrap()
+    }
+    fn mass(&self) -> u64 {
+        return 0;
+    }
+    fn gas(&self) -> u64 {
+        return 0;
     }
 }
 impl ITransaction for &Box<RpcTransaction> {
@@ -171,6 +191,12 @@ impl ITransaction for &Box<RpcTransaction> {
             Prefix::try_from("kaspatest").unwrap(),
         )
         .unwrap()
+    }
+    fn mass(&self) -> u64 {
+        return self.mass;
+    }
+    fn gas(&self) -> u64 {
+        return self.gas;
     }
 }
 
@@ -191,16 +217,19 @@ pub fn detect_krc20_receiver<T: ITransaction>(sigtx: T) -> Address {
 pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
     let mut inscription: Option<TokenTransaction> = None;
 
+    
     if let Some(signature_script) = sigtx.signature_script() {
         if detect_kasplex_header(signature_script) {
             // Get the second opcode
             let mut opcodes_iter = parse_script(signature_script);
             let second_opcode: Option<
-                std::result::Result<
-                    Box<dyn OpCodeImplementation<PopulatedTransaction>>,
-                    TxScriptError,
-                >,
+            std::result::Result<
+            Box<dyn OpCodeImplementation<PopulatedTransaction>>,
+            TxScriptError,
+            >,
             > = opcodes_iter.nth(1);
+            
+            // println!("------------------ {} {}", sigtx.gas(), sigtx.mass());
 
             match second_opcode {
                 Some(Ok(opcode)) => {
@@ -208,14 +237,25 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
                         && opcode.is_push_opcode()
                         && detect_krc20_header(opcode.get_data())
                     {
+
                         let inner_opcodes: Vec<_> =
                             parse_script::<PopulatedTransaction>(opcode.get_data()).collect();
                         if inner_opcodes.len() >= 2 {
                             if let Some(Ok(second_to_last_opcode)) =
                                 inner_opcodes.get(inner_opcodes.len() - 2)
                             {
-                                match from_slice(second_to_last_opcode.get_data()) {
+                                
+                                match from_slice::<TokenTransaction>(second_to_last_opcode.get_data()) {
                                     Ok(token_transaction) => {
+                                        
+                                        // Debug
+                                        if token_transaction.op.to_lowercase() == "deploy" {
+                                            ascii_debug_payload(opcode.get_data());
+                                        }     // Debug
+                                        if token_transaction.tick.to_lowercase() == "toitoi" {
+                                            ascii_debug_payload(opcode.get_data());
+                                        }
+
                                         inscription = Some(token_transaction);
                                     }
                                     Err(e) => {
