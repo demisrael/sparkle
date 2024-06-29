@@ -10,7 +10,7 @@ pub enum Protocol {
 impl fmt::Display for Protocol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Protocol::Krc20 => write!(f, "KRC-20"),
+            Protocol::Krc20 => write!(f, "krc-20"),
         }
     }
 }
