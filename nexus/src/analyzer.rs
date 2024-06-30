@@ -1,6 +1,7 @@
 use crate::imports::*;
 use serde_json::from_slice;
 use sparkle_core::inscription::ascii_debug_payload;
+use sparkle_core::model::kasplex;
 // use kaspa_rpc_core::model::*;
 
 pub enum AnalyzerEvent {
@@ -51,14 +52,14 @@ impl Analyzer {
 
                                     if let Some(token) = detect_krc20(transaction){
 
-                                        if token.clone().tick.to_lowercase() == *"toitoi" {
+                                        if token.has_tick("toitoi") {
                                             println!("Filter tick");
-                                            dbg!(token.clone());
+                                            dbg!(&token);
                                         }
                                         // Debug
-                                        if token.clone().op.to_lowercase() == *"deploy" {
+                                        if token.op == kasplex::v1::krc20::Op::Deploy {
                                             println!("Filter deploy");
-                                            dbg!(token.clone());
+                                            dbg!(&token);
                                         }
 
                                     }
@@ -236,15 +237,16 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
                                 ) {
                                     Ok(token_transaction) => {
                                         // Debug
-                                        if token_transaction.op.to_lowercase() == "transfer" {
+                                        if token_transaction.op == kasplex::v1::krc20::Op::Transfer
+                                        {
                                             ascii_debug_payload(opcode.get_data());
                                         }
                                         // Debug
-                                        if token_transaction.op.to_lowercase() == "deploy" {
+                                        if token_transaction.op == kasplex::v1::krc20::Op::Deploy {
                                             ascii_debug_payload(opcode.get_data());
                                         }
                                         // Debug
-                                        if token_transaction.tick.to_lowercase() == "toitoi" {
+                                        if token_transaction.has_tick("toitoi") {
                                             ascii_debug_payload(opcode.get_data());
                                         }
 

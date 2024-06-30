@@ -1,5 +1,5 @@
 use crate::constants::*;
-use crate::model::kasplex::v1::krc20::TokenTransaction;
+use crate::model::kasplex::v1::krc20::{Op, TokenTransaction};
 use crate::model::kasplex::v1::Protocol;
 
 use kaspa_addresses::Address;
@@ -106,7 +106,7 @@ fn print_script_sig(script_sig: &[u8]) {
 pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
     let transaction: TokenTransaction = TokenTransaction {
         protocol: Protocol::from_str("krc-20").unwrap(),
-        op: "deploy".to_string(),
+        op: Op::Deploy,
         tick: "TOITOI".to_string(),
         max: Some(100000000000000000),
         limit: Some(100000000000),
@@ -141,7 +141,7 @@ pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
 pub fn mint_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
     let transaction: TokenTransaction = TokenTransaction {
         protocol: Protocol::from_str("krc-20").unwrap(),
-        op: "mint".to_string(),
+        op: Op::Mint,
         tick: "TOITOI".to_string(),
         max: None,
         limit: None,
