@@ -188,15 +188,15 @@ impl Wallet {
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn demo_deploy(&self) {
         let (secret_key, public_key) = demo_keypair();
-        let payback_amount = 2 * SOMPI_PER_KASPA;
+        let payback_amount = 5 * SOMPI_PER_KASPA;
 
         // Deploy fee
-        let reveal_fee = 1001 * SOMPI_PER_KASPA;
+        let reveal_fee = 2005 * SOMPI_PER_KASPA;
 
         // Total amount: reveal fee and payback amount
         let commit_total_amount = reveal_fee + payback_amount;
 
-        let commit_fee = SOMPI_PER_KASPA;
+        let commit_fee = SOMPI_PER_KASPA / 2;
         let account = self.account.clone().unwrap();
         let recipient = account.receive_address.clone().unwrap();
         println!("Destination address {}", recipient.clone());
@@ -313,12 +313,12 @@ impl Wallet {
         let payback_amount = 5 * SOMPI_PER_KASPA;
 
         // Deploy fee
-        let reveal_fee = 3 * SOMPI_PER_KASPA;
+        let reveal_fee = SOMPI_PER_KASPA;
 
         // Total amount: reveal fee and payback amount
         let commit_total_amount = reveal_fee + payback_amount;
 
-        let commit_fee = 2 * SOMPI_PER_KASPA;
+        let commit_fee = SOMPI_PER_KASPA / 2;
         let account = self.account.clone().unwrap();
         let recipient = account.receive_address.clone().unwrap();
         println!("Destination address {}", recipient.clone());

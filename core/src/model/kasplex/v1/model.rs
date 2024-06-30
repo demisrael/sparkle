@@ -272,7 +272,7 @@ pub mod krc20 {
 
         /// TODO - what is dec?
         #[serde_as(as = "DisplayFromStr")]
-        pub dec: u64,
+        pub dec: u128,
 
         #[serde_as(as = "DisplayFromStr")]
         #[serde(rename = "opScoreMod")]
@@ -348,10 +348,13 @@ pub mod krc20 {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub max: Option<u128>,
 
+        #[serde_as(as = "Option<DisplayFromStr>")]
         #[serde(rename = "lim")]
         #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<u128>,
 
+        #[serde_as(as = "Option<DisplayFromStr>")]
+        #[serde(rename = "dec")]
         #[serde(skip_serializing_if = "Option::is_none")]
         pub dec: Option<u64>,
 

@@ -76,7 +76,7 @@ impl Client {
                         // wallet.wallet.utxo_processor();
                         log_info!("{:#?}", wallet.account);
                         wallet.demo_deploy().await;
-                        // wallet.demo_mint().await;
+                        wallet.demo_mint().await;
                     }
                 }
             }
