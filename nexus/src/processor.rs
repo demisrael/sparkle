@@ -21,6 +21,7 @@ struct Inner {
     sender: mpsc::Sender<Ingest>,
     receiver: Mutex<Option<mpsc::Receiver<Ingest>>>,
     ingest: Mutex<Option<thread::JoinHandle<()>>>,
+    #[allow(dead_code)]
     utxo_db: Arc<Db>,
 }
 

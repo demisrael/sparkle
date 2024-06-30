@@ -26,6 +26,7 @@ pub enum Action {
 #[derive(Debug)]
 pub enum WalletAction {
     Test,
+    Test2,
 }
 
 impl Args {

@@ -20,10 +20,15 @@ pub mod v1 {
             })
         }
 
-        pub async fn get_indexer_status(&self) -> Result<v1::IndexerStatusResponse> {
-            let result =
+        pub async fn get_indexer_status(&self) -> Result<v1::IndexerStatus> {
+            let response =
                 get_json::<v1::IndexerStatusResponse>(self.inner.url.join("/info")).await?;
-            Ok(result)
+
+            if response.message != "success" {
+                Err(Error::IndexerError(response.message))
+            } else {
+                Ok(response.result)
+            }
         }
 
         pub async fn get_token_list_page(
@@ -36,8 +41,8 @@ pub mod v1 {
                 url = url.join(format!("?next={}", cursor));
             }
 
-            let result = get_json::<v1::krc20::TokenListResponse>(url).await?;
-            Ok(result)
+            let response = get_json::<v1::krc20::TokenListResponse>(url).await?;
+            Ok(response)
         }
 
         pub async fn get_token_list(&self) -> Result<Vec<v1::krc20::Token>> {
@@ -45,11 +50,16 @@ pub mod v1 {
             let mut cursor = None;
             loop {
                 let v1::krc20::TokenListResponse {
-                    message: _,
+                    message,
                     next,
                     prev: _,
                     result,
                 } = self.get_token_list_page(cursor).await?;
+
+                if message != "success" {
+                    return Err(Error::IndexerError(message));
+                }
+
                 let len = result.len();
                 list.extend(result.into_iter());
                 if len < 50 {
@@ -60,6 +70,46 @@ pub mod v1 {
             }
 
             Ok(list)
+        }
+
+        // https://tn11api.kasplex.org/v1/krc20/address/{address}/token/{tick}
+        // https://tn11api.kasplex.org/v1/krc20/address/{address}/tokenlist
+
+        pub async fn get_token_balance_list_by_address(
+            &self,
+            address: &Address,
+        ) -> Result<Vec<v1::krc20::TokenBalance>> {
+            let url = self
+                .inner
+                .url
+                .join(format!("/krc20/address/{address}/tokenlist"));
+
+            // TODO: loop over paginated results
+            let response = get_json::<v1::krc20::TokenBalanceListByAddressResponse>(url).await?;
+
+            if response.message != "success" {
+                Err(Error::IndexerError(response.message))
+            } else {
+                Ok(response.result)
+            }
+        }
+
+        pub async fn get_token_balance_by_address(
+            &self,
+            address: &Address,
+            tick: &str,
+        ) -> Result<Vec<v1::krc20::TokenBalance>> {
+            let url = self
+                .inner
+                .url
+                .join(format!("/krc20/address/{address}/token/{tick}"));
+            let response = get_json::<v1::krc20::TokenBalanceResponse>(url).await?;
+
+            if response.message != "success" {
+                Err(Error::IndexerError(response.message))
+            } else {
+                Ok(response.result)
+            }
         }
     }
 

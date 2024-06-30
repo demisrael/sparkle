@@ -25,12 +25,12 @@ use std::fmt::Write;
 #[derive(Debug, Deserialize)]
 pub struct IndexerStatusResponse {
     pub message: String,
-    pub result: IndexerStatusResult,
+    pub result: IndexerStatus,
 }
 
 #[serde_as]
 #[derive(Debug, Deserialize)]
-pub struct IndexerStatusResult {
+pub struct IndexerStatus {
     #[serde_as(as = "DisplayFromStr")]
     #[serde(rename = "daaScore")]
     pub daa_score: u64,
@@ -53,9 +53,9 @@ pub struct IndexerStatusResult {
     pub fee_total: u64,
 }
 
-impl IndexerStatusResult {
+impl IndexerStatus {
     pub fn format(&self, network: Network) -> String {
-        let IndexerStatusResult {
+        let IndexerStatus {
             daa_score,
             op_score,
             op_total,
@@ -279,6 +279,33 @@ pub mod krc20 {
         pub op_score_mod: u64,
     }
 
+    /// URLpath : `https://tn11api.kasplex.org/v1/krc20/address/{address}/tokenlist`
+    ///
+    /// ```json
+    /// {
+    ///     "message": "text",
+    ///     "prev": "text",
+    ///     "next": "text",
+    ///     "result": [
+    ///       {
+    ///         "tick": "text",
+    ///         "balance": "text",
+    ///         "locked": "0",
+    ///         "dec": "text",
+    ///         "opScoreMod": "79993666"
+    ///       }
+    ///     ]
+    ///   }
+    /// ```
+
+    #[derive(Debug, Deserialize)]
+    pub struct TokenBalanceListByAddressResponse {
+        pub message: String,
+        pub next: String,
+        pub prev: String,
+        pub result: Vec<TokenBalance>,
+    }
+
     ///
     /// URL path: `//krc20/oplist/{op}`
     ///
@@ -319,20 +346,6 @@ pub mod krc20 {
         pub result: Vec<TokenTransaction>,
     }
 
-    //     fn deserialize_option_u128<'de, D>(deserializer: D) -> std::result::Result<Option<u128>, D::Error>
-    // where
-    //     D: Deserializer<'de>,
-    // {
-    //     // let s: Option<&str> = std::option::Option::deserialize(deserializer)?;
-    //     let s: Option<&str> = <Option<&str> as serde::Deserialize>::deserialize(deserializer)?;
-
-    //     match s {
-    //         Some(value) => {
-    //             u128::from_str(value).map(Some).map_err(de::Error::custom)
-    //         }
-    //         None => Ok(None),
-    //     }
-    // }
     #[serde_as]
     #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
     pub struct TokenTransaction {

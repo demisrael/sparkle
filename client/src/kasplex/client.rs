@@ -51,10 +51,10 @@ impl Client {
             }
             Action::Status => {
                 let indexer = Indexer::try_new(network.into())?;
-                let response = indexer.get_indexer_status().await?;
+                let result = indexer.get_indexer_status().await?;
                 println!();
                 println!("{:>12}: {}", "Network", network_id);
-                println!("{}", response.result.format(v1::Network::Testnet11));
+                println!("{}", result.format(v1::Network::Testnet11));
                 println!();
             }
         }

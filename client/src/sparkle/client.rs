@@ -2,9 +2,11 @@ use crate::args::{Action, Args, WalletAction};
 use crate::wallet::*;
 use cliclack::intro;
 use console::style;
+use sparkle_core::model::kasplex;
 use sparkle_core::runtime::Runtime;
 use sparkle_rpc_client::prelude::*;
-// use sparkle_rs::imports::*;
+use sparkle_rs::imports::*;
+use sparkle_rs::kasplex::v1::Indexer as KasplexIndexer;
 use sparkle_rs::result::Result;
 use workflow_log::prelude::*;
 
@@ -77,6 +79,26 @@ impl Client {
                         log_info!("{:#?}", wallet.account);
                         wallet.demo_deploy().await;
                         wallet.demo_mint().await;
+                    }
+                    WalletAction::Test2 => {
+                        let _wallet = Wallet::try_new(ctx, true).await?;
+                        // wallet.wallet.utxo_processor();
+                        // log_info!("{:#?}", wallet.account);
+                        // wallet.demo_deploy().await;
+                        // wallet.demo_mint().await;
+
+                        // some fake address (placeholder)
+                        let address = match network_id.network_type() {
+                            NetworkType::Testnet => Address::try_from("kaspatest:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhqrxplya").unwrap(),
+                            NetworkType::Mainnet => Address::try_from("kaspa:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkx9awp4e").unwrap(),
+                            _ => panic!("Unsupported network"),
+                        };
+
+                        let network = kasplex::v1::Network::try_from(&network_id)?;
+                        let indexer = KasplexIndexer::try_new(network.into())?;
+                        let mut tokens =
+                            indexer.get_token_balance_list_by_address(&address).await?;
+                        tokens.sort_by(|a, b| a.tick.cmp(&b.tick));
                     }
                 }
             }
