@@ -25,6 +25,9 @@ pub enum Error {
 
     #[error(transparent)]
     KaspaRpcClient(#[from] kaspa_wrpc_client::error::Error),
+
+    #[error("Indexer error: {0}")]
+    IndexerError(String),
 }
 
 impl Error {

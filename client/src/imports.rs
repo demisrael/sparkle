@@ -1,4 +1,5 @@
 pub use crate::error::Error;
+pub use kaspa_addresses::{Address, Prefix as AddressPrefix};
 pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_hashes::Hash;
 pub use kaspa_utils::hex::{FromHex, ToHex};
