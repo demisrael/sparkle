@@ -55,13 +55,52 @@ fn redeem_pubkey(redeem_script: &[u8], pubkey: &[u8]) -> ScriptBuilderResult<Vec
         .add_op(OpFalse)?
         .add_op(OpIf)?
         .add_data(PROTOCOL_NAMESPACE.as_bytes())?
-        // .add_data(&[0])?
+        // .add_data(&[1])?
+        // Force OpPushData1 for metadata to be kasplex compliant
+        // .add_data(&vec![0x12; 76])?
         .add_i64(0)?
-        .add_data("".as_bytes())?
-        .add_i64(1)?
         .add_data(redeem_script)?
         .add_op(OpEndIf)?
         .drain())
+}
+
+fn print_script_sig(script_sig: &[u8]) {
+    let mut step = 0;
+    let mut incrementing = true;
+
+    for (index, value) in script_sig.iter().enumerate() {
+        let overall_position = index * 2;
+        let hex_string = format!("{:02x}", value);
+        let decimal_value = format!("{:03}", value);
+        let ascii_value = if *value >= 0x20 && *value <= 0x7e {
+            *value as char
+        } else {
+            step = 0; // Reset step if the character is non-ASCII
+            incrementing = true; // Reset incrementing
+            '.'
+        };
+        let padding = " ".repeat(step * 2);
+        println!(
+            "{:03} 0x{} | {} | {}{}",
+            overall_position, hex_string, decimal_value, padding, ascii_value
+        );
+
+        if *value >= 0x20 && *value <= 0x7e {
+            if incrementing {
+                if step < 10 {
+                    step += 1;
+                } else {
+                    incrementing = false;
+                    step -= 1;
+                }
+            } else if step > 0 {
+                step -= 1;
+            } else {
+                incrementing = true;
+                step += 1;
+            }
+        }
+    }
 }
 
 pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
@@ -69,10 +108,10 @@ pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
         protocol: Protocol::from_str("krc-20").unwrap(),
         op: "deploy".to_string(),
         tick: "TOITOI".to_string(),
-        max: Some(21000000000),
-        limit: Some(30100000),
-        pre: Some(0),
-        dec: Some(2),
+        max: Some(100000000000000000),
+        limit: Some(100000000000),
+        pre: Some(100000000000),
+        dec: Some(8),
         amount: None,
         from: None,
         to: None,
@@ -305,6 +344,8 @@ mod tests {
             priority_fee_sompi,
             priority_fee_sompi,
         );
+
+        print_script_sig(&unsigned_tx.inputs[0].signature_script);
 
         let tx = MutableTransaction::with_entries(unsigned_tx, entries);
 

@@ -227,7 +227,9 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
                             if let Some(Ok(second_to_last_opcode)) =
                                 inner_opcodes.get(inner_opcodes.len() - 2)
                             {
-                                // ascii_debug_payload(second_to_last_opcode.get_data());
+                                ascii_debug_payload(second_to_last_opcode.get_data());
+
+                                println!("Receiver {:}", sigtx.rcv().address_to_string());
 
                                 match from_slice::<TokenTransaction>(
                                     second_to_last_opcode.get_data(),
@@ -249,6 +251,8 @@ pub fn detect_krc20<T: ITransaction>(sigtx: T) -> Option<TokenTransaction> {
                                         inscription = Some(token_transaction);
                                     }
                                     Err(e) => {
+                                        ascii_debug_payload(second_to_last_opcode.get_data());
+
                                         // Handle the error if necessary
                                         eprintln!("Failed to deserialize: {:?}", e);
                                     }

@@ -403,7 +403,7 @@ impl Nexus {
         self.sender()
             .send(Ingest::Transaction(transaction.clone().into()))?;
 
-        let Some(txid) = transaction
+        let Some(_txid) = transaction
             .verbose_data
             .as_ref()
             .map(|data| data.transaction_id)
@@ -412,11 +412,11 @@ impl Nexus {
         };
 
         // just some fake pre-selection logic
-        if txid.as_bytes()[0] < 200 {
-            return Ok(());
-        } else {
-            self.inner.pending.lock().unwrap().push(transaction.clone());
-        }
+        // if txid.as_bytes()[0] < 200 {
+        // return Ok(());
+        // } else {
+        self.inner.pending.lock().unwrap().push(transaction.clone());
+        // }
 
         Ok(())
     }
