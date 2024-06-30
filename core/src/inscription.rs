@@ -64,16 +64,40 @@ fn redeem_pubkey(redeem_script: &[u8], pubkey: &[u8]) -> ScriptBuilderResult<Vec
 }
 
 fn print_script_sig(script_sig: &Vec<u8>) {
+    let mut step = 0;
+    let mut incrementing = true;
+
     for (index, value) in script_sig.iter().enumerate() {
         let overall_position = index * 2;
         let hex_string = format!("{:02x}", value);
-        let decimal_value = *value as u32;
+        let decimal_value = format!("{:03}", value);
         let ascii_value = if *value >= 0x20 && *value <= 0x7e {
             *value as char
         } else {
+            step = 0; // Reset step if the character is non-ASCII
+            incrementing = true; // Reset incrementing
             '.'
         };
-        println!("{:03} 0x{} | {} | {}", overall_position, hex_string, decimal_value, ascii_value);
+        let padding = " ".repeat(step * 2);
+        println!("{:03} 0x{} | {} | {}{}", overall_position, hex_string, decimal_value, padding, ascii_value);
+
+        if *value >= 0x20 && *value <= 0x7e {
+            if incrementing {
+                if step < 10 {
+                    step += 1;
+                } else {
+                    incrementing = false;
+                    step -= 1;
+                }
+            } else {
+                if step > 0 {
+                    step -= 1;
+                } else {
+                    incrementing = true;
+                    step += 1;
+                }
+            }
+        }
     }
 }
 
