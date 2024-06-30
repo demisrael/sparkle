@@ -412,11 +412,11 @@ impl Nexus {
         };
 
         // just some fake pre-selection logic
-        if txid.as_bytes()[0] < 200 {
-            return Ok(());
-        } else {
-            self.inner.pending.lock().unwrap().push(transaction.clone());
-        }
+        // if txid.as_bytes()[0] < 200 {
+            // return Ok(());
+        // } else {
+        self.inner.pending.lock().unwrap().push(transaction.clone());
+        // }
 
         Ok(())
     }

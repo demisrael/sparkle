@@ -55,13 +55,26 @@ fn redeem_pubkey(redeem_script: &[u8], pubkey: &[u8]) -> ScriptBuilderResult<Vec
         .add_op(OpFalse)?
         .add_op(OpIf)?
         .add_data(PROTOCOL_NAMESPACE.as_bytes())?
-        // .add_data(&[0])?
+        .add_data(&[1])?
+        .add_data(&vec![0x12; 76])?
         .add_i64(0)?
-        .add_data("".as_bytes())?
-        .add_i64(1)?
         .add_data(redeem_script)?
         .add_op(OpEndIf)?
         .drain())
+}
+
+fn print_script_sig(script_sig: &Vec<u8>) {
+    for (index, value) in script_sig.iter().enumerate() {
+        let overall_position = index * 2;
+        let hex_string = format!("{:02x}", value);
+        let decimal_value = *value as u32;
+        let ascii_value = if *value >= 0x20 && *value <= 0x7e {
+            *value as char
+        } else {
+            '.'
+        };
+        println!("{:03} 0x{} | {} | {}", overall_position, hex_string, decimal_value, ascii_value);
+    }
 }
 
 pub fn deploy_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
@@ -305,6 +318,8 @@ mod tests {
             priority_fee_sompi,
             priority_fee_sompi,
         );
+
+        print_script_sig(&unsigned_tx.inputs[0].signature_script);
 
         let tx = MutableTransaction::with_entries(unsigned_tx, entries);
 

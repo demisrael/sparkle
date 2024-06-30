@@ -201,6 +201,7 @@ impl Wallet {
         let recipient = account.receive_address.clone().unwrap();
         println!("Destination address {}", recipient.clone());
         let (redeem_lock, script_sig) = deploy_token_demo(&public_key);
+
         let p2sh = redeem_lock.clone();
 
         let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
