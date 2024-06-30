@@ -84,6 +84,38 @@ impl IndexerStatus {
 pub mod krc20 {
     use super::*;
 
+    #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize)]
+    #[serde(rename_all = "lowercase")]
+    pub enum Op {
+        Deploy,
+        Mint,
+        Transfer,
+        // Burn,
+    }
+
+    impl std::fmt::Display for Op {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Op::Deploy => write!(f, "deploy"),
+                Op::Mint => write!(f, "mint"),
+                Op::Transfer => write!(f, "transfer"),
+            }
+        }
+    }
+
+    impl FromStr for Op {
+        type Err = Error;
+
+        fn from_str(s: &str) -> Result<Self> {
+            match s {
+                "deploy" => Ok(Op::Deploy),
+                "mint" => Ok(Op::Mint),
+                "transfer" => Ok(Op::Transfer),
+                _ => Err(Error::custom(format!("Invalid KRC20 operation: {}", s))),
+            }
+        }
+    }
+
     ///
     /// URL path: `/krc20/tokenlist`
     ///
@@ -353,7 +385,7 @@ pub mod krc20 {
         #[serde(rename = "p")]
         pub protocol: Protocol,
 
-        pub op: String,
+        pub op: Op,
 
         pub tick: String,
 
@@ -420,6 +452,18 @@ pub mod krc20 {
         pub mts_mod: Option<String>,
     }
 
+    impl AsRef<TokenTransaction> for TokenTransaction {
+        fn as_ref(&self) -> &TokenTransaction {
+            self
+        }
+    }
+
+    impl TokenTransaction {
+        pub fn has_tick<S: std::fmt::Display>(&self, tick: S) -> bool {
+            self.tick.to_lowercase() == tick.to_string().to_lowercase()
+        }
+    }
+
     ///
     /// URL path: `//krc20/op/{id}`
     ///
@@ -459,7 +503,7 @@ pub mod krc20 {
 
     pub struct TokenTransactionBuilder {
         protocol: Protocol,
-        op: String,
+        op: Op,
         tick: String,
         max: Option<u128>,
         limit: Option<u128>,
@@ -479,11 +523,11 @@ pub mod krc20 {
     }
 
     impl TokenTransactionBuilder {
-        pub fn new(protocol: Protocol, op: String, tick: String) -> Self {
+        pub fn new<S: std::fmt::Display>(protocol: Protocol, op: Op, tick: S) -> Self {
             Self {
                 protocol,
                 op,
-                tick,
+                tick: tick.to_string(),
                 max: None,
                 limit: None,
                 pre: None,
@@ -502,24 +546,32 @@ pub mod krc20 {
             }
         }
 
-        pub fn max(mut self, max: u128) -> Self {
-            self.max = Some(max);
-            self
+        pub fn max(self, max: u128) -> Self {
+            Self {
+                max: Some(max),
+                ..self
+            }
         }
 
-        pub fn amount(mut self, amount: u128) -> Self {
-            self.amount = Some(amount);
-            self
+        pub fn amount(self, amount: u128) -> Self {
+            Self {
+                amount: Some(amount),
+                ..self
+            }
         }
 
-        pub fn limit(mut self, limit: u128) -> Self {
-            self.limit = Some(limit);
-            self
+        pub fn limit(self, limit: u128) -> Self {
+            Self {
+                limit: Some(limit),
+                ..self
+            }
         }
 
-        pub fn dec(mut self, dec: u64) -> Self {
-            self.dec = Some(dec);
-            self
+        pub fn dec(self, dec: u64) -> Self {
+            Self {
+                dec: Some(dec),
+                ..self
+            }
         }
 
         pub fn build(self) -> TokenTransaction {
@@ -570,7 +622,7 @@ pub mod krc20 {
                     "#,
                 expected: Ok(TokenTransactionBuilder::new(
                     Protocol::Krc20,
-                    "transfer".to_string(),
+                    Op::Transfer,
                     "SPARKL".to_string(),
                 )
                 .amount(500)
