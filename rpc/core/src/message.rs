@@ -8,7 +8,9 @@ impl Serializer for PingRequest {
         store!(u16, &1, writer)?;
         Ok(())
     }
+}
 
+impl Deserializer for PingRequest {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let _version = load!(u16, reader)?;
         Ok(Self {})
@@ -23,7 +25,9 @@ impl Serializer for PingResponse {
         store!(u16, &1, writer)?;
         Ok(())
     }
+}
 
+impl Deserializer for PingResponse {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let _version = load!(u16, reader)?;
         Ok(Self {})
@@ -38,7 +42,9 @@ impl Serializer for GetStatusRequest {
         store!(u16, &1, writer)?;
         Ok(())
     }
+}
 
+impl Deserializer for GetStatusRequest {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let _version = load!(u16, reader)?;
         Ok(Self {})
@@ -58,7 +64,9 @@ impl Serializer for GetStatusResponse {
         store!(NetworkId, &self.network_id, writer)?;
         Ok(())
     }
+}
 
+impl Deserializer for GetStatusResponse {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let _version = load!(u16, reader)?;
         let sparkled_version = load!(String, reader)?;

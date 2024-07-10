@@ -130,6 +130,10 @@ impl SparkleRpcClient {
         &self.inner.rpc_client
     }
 
+    pub fn ctl_multiplexer(&self) -> Multiplexer<WrpcCtl> {
+        self.inner.wrpc_ctl_multiplexer.clone()
+    }
+
     // pub fn rpc_api(self: &Arc<Self>) -> Arc<dyn RpcApi> {
     //     self.clone()
     // }

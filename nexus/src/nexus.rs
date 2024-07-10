@@ -3,7 +3,7 @@ use crate::imports::*;
 use kaspa_rpc_core::api::ctl::{RpcCtl, RpcState};
 use kaspa_rpc_core::RpcBlock;
 use kaspa_rpc_core::{
-    api::ops::RPC_API_VERSION,
+    api::ops::{RPC_API_REVISION, RPC_API_VERSION},
     model::{GetServerInfoResponse, RpcTransaction},
     notify::connection::{ChannelConnection, ChannelType},
     BlockAddedNotification, Notification, VirtualChainChangedNotification,
@@ -175,6 +175,7 @@ impl Nexus {
             is_synced,
             virtual_daa_score,
             rpc_api_version,
+            rpc_api_revision,
         } = self.rpc_api().get_server_info().await?;
 
         let network_id = self.network_id();
@@ -185,13 +186,13 @@ impl Nexus {
             ));
         }
 
-        if rpc_api_version[0] > RPC_API_VERSION[0] || rpc_api_version[1] > RPC_API_VERSION[1] {
-            let current = RPC_API_VERSION
+        if rpc_api_version > RPC_API_VERSION {
+            let current = [RPC_API_VERSION, RPC_API_REVISION]
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<_>>()
                 .join(".");
-            let connected = rpc_api_version
+            let connected = [rpc_api_version, rpc_api_revision]
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<_>>()

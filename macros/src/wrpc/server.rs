@@ -82,7 +82,7 @@ impl ToTokens for RpcTable {
                     #rpc_api_ops
                 >::new(#server_ctx);
 
-                for op in #rpc_api_ops::list() {
+                for op in #rpc_api_ops::iter() {
                     match op {
                         #(#targets)*
                         _ => { }

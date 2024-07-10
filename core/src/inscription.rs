@@ -64,6 +64,7 @@ fn redeem_pubkey(redeem_script: &[u8], pubkey: &[u8]) -> ScriptBuilderResult<Vec
         .drain())
 }
 
+#[allow(dead_code)]
 fn print_script_sig(script_sig: &[u8]) {
     let mut step = 0;
     let mut incrementing = true;
@@ -248,6 +249,7 @@ pub fn reveal_transaction(
 
     // Transaction generator
     let utxo_entries: Vec<UtxoEntryReference> = vec![];
+    let priority_utxo_entries = None;
     let multiplexer = None;
     let sig_op_count = 1;
     let minimum_signatures = 1;
@@ -271,6 +273,7 @@ pub fn reveal_transaction(
         minimum_signatures,
         change_address,
         utxo_iterator,
+        priority_utxo_entries,
         source_utxo_context,
         destination_utxo_context,
         final_transaction_priority_fee: final_priority_fee,
