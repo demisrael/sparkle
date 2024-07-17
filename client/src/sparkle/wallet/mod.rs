@@ -1,18 +1,20 @@
 use cliclack::log;
-use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
+use kaspa_consensus_core::tx::TransactionId;
 use kaspa_wallet_core::prelude::AccountsSendRequest;
 use kaspa_wallet_core::prelude::{
     AccountDescriptor, AccountId, ConnectRequest, Wallet as CoreWallet, WalletDescriptor,
 };
+use kaspa_wallet_core::rpc::RpcApi;
 use kaspa_wallet_core::tx::PaymentOutputs;
 use pad::{Alignment, PadStr};
-use sparkle_core::inscription::{demo_keypair, deploy_token_demo, reveal_transaction};
+use sparkle_core::inscription::{
+    demo_keypair, deploy_token_demo, mint_token_demo, reveal_transaction, TransactionDetails,
+};
 use sparkle_rs::imports::*;
 use sparkle_rs::monitor::monitor;
 use sparkle_rs::result::Result;
 #[cfg(not(target_arch = "wasm32"))]
 use tokio::task::JoinHandle;
-
 mod account;
 use account::Account;
 
@@ -188,148 +190,39 @@ impl Wallet {
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn demo_deploy(&self) {
         let (secret_key, public_key) = demo_keypair();
-        let payback_amount = 5 * SOMPI_PER_KASPA;
-
-        // Deploy fee
-        let reveal_fee = 2005 * SOMPI_PER_KASPA;
-
-        // Total amount: reveal fee and payback amount
-        let commit_total_amount = reveal_fee + payback_amount;
-
-        let commit_fee = SOMPI_PER_KASPA / 2;
-        let account = self.account.clone().unwrap();
-        let recipient = account.receive_address.clone().unwrap();
-        println!("Destination address {}", recipient.clone());
         let (redeem_lock, script_sig) = deploy_token_demo(&public_key);
-
         let p2sh = redeem_lock.clone();
-
-        let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
-            if let Err(e) = monitor(p2sh.clone()).await {
-                eprintln!("Error in monitor: {}", e);
-            }
-        });
-
-        let send_request = AccountsSendRequest {
-            account_id: account.account_id,
-            wallet_secret: "111".into(),
-            payment_secret: None,
-            destination: PaymentOutputs::from((redeem_lock, commit_total_amount)).into(),
-            priority_fee_sompi: commit_fee.into(),
-            payload: None,
-        };
-        self.wallet
-            .as_api()
-            .accounts_send(send_request)
-            .await
-            .unwrap();
-
-        // Wait for commit UTXO
-        match monitor_handle.await {
-            Ok(_) => {
-                println!("Monitor task  01 completed successfully");
-
-                // Assume latest transaction ID is commit transaction.
-                let txs = self
-                    .wallet
-                    .as_api()
-                    .transactions_data_get_range(
-                        account.account_id,
-                        self.wallet.network_id().unwrap(),
-                        0..1,
-                    )
-                    .await
-                    .unwrap();
-
-                let prev_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> =
-                    txs.transactions.first().unwrap();
-                println!("prev_tx tid {:?}", prev_tx.id);
-                println!("prev_tx daa score {:?}", prev_tx.block_daa_score);
-
-                let (transaction, _, _) = reveal_transaction(
-                    script_sig,
-                    recipient.clone(),
-                    secret_key,
-                    prev_tx.id,
-                    prev_tx.block_daa_score,
-                    payback_amount,
-                    reveal_fee,
-                );
-
-                let _result = self
-                    .wallet
-                    .rpc_api()
-                    .submit_transaction(transaction.rpc_transaction(), false)
-                    .await;
-                println!("Reveal transaction submitted {:?}", _result);
-
-                println!();
-                let t = self
-                    .wallet
-                    .rpc_api()
-                    .get_mempool_entry(transaction.id(), false, false)
-                    .await;
-                println!("Mempool fetch {:?}", t);
-                println!();
-            }
-            Err(e) => eprintln!("Monitor task failed: {:?}", e),
-        }
-
-        // Wait for reveal UTXO
-        let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
-            if let Err(e) = monitor(recipient.clone()).await {
-                eprintln!("Error in monitor: {}", e);
-            }
-        });
-
-        match monitor_handle.await {
-            Ok(_) => {
-                println!();
-                println!("Monitor task 02 completed successfully");
-
-                let txs = self
-                    .wallet
-                    .as_api()
-                    .transactions_data_get_range(
-                        account.account_id,
-                        self.wallet.network_id().unwrap(),
-                        0..1,
-                    )
-                    .await
-                    .unwrap();
-                let reveal_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> =
-                    txs.transactions.first().unwrap();
-                println!("reveal tx {:?}", reveal_tx);
-            }
-            Err(e) => eprintln!("Monitor task failed: {:?}", e),
-        }
+        self.commit_reveal_chain(p2sh, redeem_lock, script_sig, secret_key, FEE_DEPLOY)
+            .await;
     }
 
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn demo_mint(&self) {
-        use sparkle_core::inscription::mint_token_demo;
-
         let (secret_key, public_key) = demo_keypair();
-        let payback_amount = 5 * SOMPI_PER_KASPA;
+        let (redeem_lock, script_sig) = mint_token_demo(&public_key);
+        let p2sh: Address = redeem_lock.clone();
+        self.commit_reveal_chain(p2sh, redeem_lock, script_sig, secret_key, FEE_MINT)
+            .await;
+    }
 
-        // Deploy fee
-        let reveal_fee = SOMPI_PER_KASPA;
-
-        // Total amount: reveal fee and payback amount
+    #[cfg(not(target_arch = "wasm32"))]
+    async fn commit_reveal_chain(
+        &self,
+        p2sh: Address,
+        redeem_lock: Address,
+        script_sig: Vec<u8>,
+        secret_key: secp256k1::SecretKey,
+        reveal_fee: u64,
+    ) {
+        let payback_amount = 10 * SOMPI_PER_KASPA;
+        let commit_fee = (SOMPI_PER_KASPA as f64 * 0.20) as u64;
         let commit_total_amount = reveal_fee + payback_amount;
-
-        let commit_fee = SOMPI_PER_KASPA / 2;
         let account = self.account.clone().unwrap();
         let recipient = account.receive_address.clone().unwrap();
         println!("Destination address {}", recipient.clone());
-        let (redeem_lock, script_sig) = mint_token_demo(&public_key);
-        let p2sh = redeem_lock.clone();
 
-        let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
-            if let Err(e) = monitor(p2sh.clone()).await {
-                eprintln!("Error in monitor: {}", e);
-            }
-        });
+        let monitor_handle: JoinHandle<_> =
+            await_utxo_inclusion(p2sh, commit_total_amount, self.wallet.rpc_api());
 
         let send_request = AccountsSendRequest {
             account_id: account.account_id,
@@ -339,16 +232,21 @@ impl Wallet {
             priority_fee_sompi: commit_fee.into(),
             payload: None,
         };
-        self.wallet
+        let txsent = self
+            .wallet
             .as_api()
             .accounts_send(send_request)
             .await
             .unwrap();
 
+        let commit_txid = txsent.final_transaction_id().unwrap();
+
         // Wait for commit UTXO
-        match monitor_handle.await {
-            Ok(_) => {
+        match monitor_handle.await.unwrap() {
+            Ok(tid) => {
                 println!("Monitor task  01 completed successfully");
+
+                assert!(commit_txid == tid);
 
                 // Assume latest transaction ID is commit transaction.
                 let txs = self
@@ -357,32 +255,42 @@ impl Wallet {
                     .transactions_data_get_range(
                         account.account_id,
                         self.wallet.network_id().unwrap(),
-                        0..1,
+                        0..10,
                     )
                     .await
                     .unwrap();
 
-                let prev_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> =
-                    txs.transactions.first().unwrap();
+                let prev_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> = txs
+                    .transactions
+                    .iter()
+                    .find(|&tx| tx.id == tid)
+                    .expect("Commit transaction");
+
+                // prev_tx.transaction_data.id()
                 println!("prev_tx tid {:?}", prev_tx.id);
                 println!("prev_tx daa score {:?}", prev_tx.block_daa_score);
 
                 let (transaction, _, _) = reveal_transaction(
-                    script_sig,
-                    recipient.clone(),
-                    secret_key,
-                    prev_tx.id,
-                    prev_tx.block_daa_score,
+                    TransactionDetails {
+                        script_sig,
+                        recipient: recipient.clone(),
+                        secret_key,
+                        prev_tx_tid: prev_tx.id,
+                        prev_tx_score: prev_tx.block_daa_score,
+                    },
                     payback_amount,
                     reveal_fee,
+                    self.wallet.network_id().unwrap(),
                 );
 
-                let _result = self
+                let submitted_reveal_tid = self
                     .wallet
                     .rpc_api()
                     .submit_transaction(transaction.rpc_transaction(), false)
-                    .await;
-                println!("Reveal transaction submitted {:?}", _result);
+                    .await
+                    .expect("Reveal transaction submit");
+
+                println!("Reveal transaction submitted {:?}", submitted_reveal_tid);
 
                 println!();
                 let t = self
@@ -392,37 +300,96 @@ impl Wallet {
                     .await;
                 println!("Mempool fetch {:?}", t);
                 println!();
-            }
-            Err(e) => eprintln!("Monitor task failed: {:?}", e),
-        }
 
-        // Wait for reveal UTXO
-        let monitor_handle: JoinHandle<_> = tokio::spawn(async move {
-            if let Err(e) = monitor(recipient.clone()).await {
-                eprintln!("Error in monitor: {}", e);
-            }
-        });
+                let monitor_handle: JoinHandle<_> =
+                    await_utxo_inclusion(recipient, payback_amount, self.wallet.rpc_api());
 
-        match monitor_handle.await {
-            Ok(_) => {
-                println!();
-                println!("Monitor task 02 completed successfully");
+                match monitor_handle.await.unwrap() {
+                    Ok(reveal_tid) => {
+                        println!();
+                        println!("Monitor task 02 completed successfully");
 
-                let txs = self
-                    .wallet
-                    .as_api()
-                    .transactions_data_get_range(
-                        account.account_id,
-                        self.wallet.network_id().unwrap(),
-                        0..1,
-                    )
-                    .await
-                    .unwrap();
-                let reveal_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> =
-                    txs.transactions.first().unwrap();
-                println!("reveal tx {:?}", reveal_tx);
+                        assert!(reveal_tid == submitted_reveal_tid);
+
+                        let txs = self
+                            .wallet
+                            .as_api()
+                            .transactions_data_get_range(
+                                account.account_id,
+                                self.wallet.network_id().unwrap(),
+                                0..10,
+                            )
+                            .await
+                            .unwrap();
+                        let reveal_tx: &Arc<kaspa_wallet_core::prelude::TransactionRecord> = txs
+                            .transactions
+                            .iter()
+                            .find(|&tx| tx.id == reveal_tid)
+                            .expect("Reveal transaction");
+
+                        println!("reveal tx {:?}", reveal_tx);
+                    }
+                    Err(e) => eprintln!("Monitor task failed: {:?}", e),
+                }
             }
             Err(e) => eprintln!("Monitor task failed: {:?}", e),
         }
     }
+}
+
+async fn query_utxo_presence(
+    rpc_api: &Arc<dyn RpcApi>,
+    expected_amount: u64,
+    p2sh: &Address,
+) -> Result<Option<TransactionId>> {
+    let result = rpc_api.get_utxos_by_addresses(vec![p2sh.clone()]).await;
+    match result {
+        Ok(entries) => {
+            for entry in entries {
+                if let Some(address) = &entry.address {
+                    if address == p2sh && entry.utxo_entry.amount == expected_amount {
+                        return Ok(Some(entry.outpoint.transaction_id));
+                    }
+                }
+            }
+            Ok(None)
+        }
+        Err(e) => Err(Error::KaspaRpc(e)),
+    }
+}
+
+use kaspa_consensus_core::Hash;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn await_utxo_inclusion(
+    p2sh: Address,
+    expected_amount: u64,
+    rpc_api: Arc<dyn RpcApi>,
+) -> JoinHandle<Result<Hash>> {
+    tokio::spawn(async move {
+        let (listener, receiver) = monitor(p2sh.clone()).await.unwrap();
+        loop {
+            match query_utxo_presence(&rpc_api, expected_amount, &p2sh).await {
+                Ok(Some(tid)) => {
+                    println!("Expected UTXO found, stopping monitor");
+                    listener
+                        .stop()
+                        .await
+                        .map_err(|e| Error::ListenerError(e.to_string()))?;
+                    return Ok(tid);
+                }
+                Ok(None) => {}
+                Err(e) => return Err(Error::custom(e.to_string())),
+            };
+
+            match receiver.recv().await {
+                Ok(_) => {
+                    println!("New related UTXO");
+                }
+                Err(e) => {
+                    eprintln!("Error in monitor: {}", e);
+                }
+            }
+        }
+    })
 }

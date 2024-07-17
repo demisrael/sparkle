@@ -1,3 +1,4 @@
+use crate::imports::*;
 pub use async_channel::{
     bounded, unbounded, Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError,
 };
@@ -11,7 +12,6 @@ use workflow_core::task::spawn;
 use workflow_log::prelude::*;
 
 use kaspa_wrpc_client::prelude::*;
-use kaspa_wrpc_client::result::Result;
 
 struct Inner {
     task_ctl: DuplexChannel<()>,
@@ -19,7 +19,7 @@ struct Inner {
     is_connected: AtomicBool,
     notification_channel: Channel<Notification>,
     listener_id: Mutex<Option<ListenerId>>,
-    shutdown_sender: Sender<()>,
+    notifier: Sender<()>,
     lookup: Address,
 }
 
@@ -33,6 +33,7 @@ impl Listener {
         network_id: NetworkId,
         url: Option<String>,
         sender: Sender<()>,
+        // stopper: Receiver<()>,
         lookup: Address,
     ) -> Result<Self> {
         let (resolver, url) = if let Some(url) = url {
@@ -56,7 +57,7 @@ impl Listener {
             is_connected: AtomicBool::new(false),
             notification_channel: Channel::unbounded(),
             listener_id: Mutex::new(None),
-            shutdown_sender: sender,
+            notifier: sender,
             lookup: lookup.clone(),
         };
         println!("Monitor: {}", lookup);
@@ -79,7 +80,7 @@ impl Listener {
         Ok(())
     }
 
-    async fn stop(&self) -> Result<()> {
+    pub async fn stop(&self) -> Result<()> {
         println!("Stopping monitor");
         // Disconnect the RPC client
         self.client().disconnect().await?;
@@ -129,14 +130,11 @@ impl Listener {
             Notification::VirtualDaaScoreChanged(_virtual_daa_score_changed_notification) => {}
 
             Notification::UtxosChanged(utxos_changed_notification) => {
-                println!("UtxosChanged");
-                for utxo in utxos_changed_notification.added.iter() {
-                    println!("UTXO found, leaving");
+                for _utxo in utxos_changed_notification.added.iter() {
                     self.inner
-                        .shutdown_sender
+                        .notifier
                         .try_send(())
                         .expect("Error sending shutdown signal...");
-                    println!("UTXO {:?}", utxo);
                 }
             }
             _ => {
@@ -235,23 +233,23 @@ impl Listener {
     }
 }
 
-pub async fn monitor(lookup: Address) -> Result<()> {
-    let (shutdown_sender, shutdown_receiver) = oneshot::<()>();
+pub async fn monitor(lookup: Address) -> Result<(Listener, async_channel::Receiver<()>)> {
+    let (notifier, notify_receiver) = oneshot();
+    // let (stopper, stopper_receiver) = oneshot();
     let url = "ws://192.168.178.36:17210".to_string();
     let listener = Listener::try_new(
         NetworkId::with_suffix(NetworkType::Testnet, 11),
         Some(url),
-        shutdown_sender,
+        notifier,
+        // stopper_receiver,
         lookup,
-    )?;
-    listener.start().await?;
+    )
+    .map_err(|e| Error::ListenerError(e.to_string()))?;
 
-    // todo: pass receiver to caller
-    shutdown_receiver
-        .recv()
+    listener
+        .start()
         .await
-        .expect("Error waiting for shutdown signal...");
+        .map_err(|e| Error::ListenerError(e.to_string()))?;
 
-    listener.stop().await?;
-    Ok(())
+    Ok((listener, notify_receiver))
 }

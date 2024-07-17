@@ -1,3 +1,4 @@
+use kaspa_wrpc_client::prelude::RpcError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -28,6 +29,15 @@ pub enum Error {
 
     #[error("Indexer error: {0}")]
     IndexerError(String),
+
+    #[error("Listener error: {0}")]
+    ListenerError(String),
+
+    #[error("Shutdown receiver error: {0}")]
+    ShutdownReceiverError(String),
+
+    #[error(transparent)]
+    KaspaRpc(#[from] RpcError),
 }
 
 impl Error {
