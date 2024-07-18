@@ -23,6 +23,7 @@ use kaspa_wallet_core::tx::{
 use kaspa_wallet_core::utxo::UtxoEntryReference;
 use kaspa_wrpc_client::prelude::*;
 use secp256k1::{rand, Secp256k1, SecretKey};
+// use core::slice::SlicePattern;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -183,6 +184,21 @@ pub fn mint_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
     (p2sh, script_sig)
 }
 
+pub fn payload_to_placeholder(payload: &Vec<u8>, pubkey: &secp256k1::PublicKey) -> Vec<u8> {
+    let needle = &pubkey.serialize()[1..33];
+
+    let position = payload
+        .windows(needle.len())
+        .position(|window| window == needle)
+        .expect("Public key present in payload");
+
+    let placeholder = "{{pubkey}}";
+
+    let mut result = payload.clone();
+    result.splice(position..position + needle.len(), placeholder.as_bytes().to_vec());
+    result
+}
+
 pub fn reveal_transaction(
     TransactionDetails {
         script_sig,
@@ -329,6 +345,7 @@ mod tests {
     use kaspa_txscript::SigCacheKey;
     use kaspa_txscript::TxScriptEngine;
     use kaspa_txscript_errors::TxScriptError;
+    use faster_hex::hex_string;
 
     fn print_script_sig(script_sig: &[u8]) {
         let mut step = 0;
@@ -381,6 +398,11 @@ mod tests {
 
         let (_, script_sig) = deploy_token_demo(&public_key);
         let priority_fee_sompi = SOMPI_PER_KASPA;
+
+        let template = payload_to_placeholder(&script_sig, &public_key);
+        println!("Template {}", hex_string(&template[..]));
+        println!("Template {:?}", template);
+        print_script_sig(&template);
 
         let prev_tx_id = TransactionId::from_str(
             "770eb9819a31821d9d2399e2f35e2433b72637e393d71ecc9b8d0250f49153c3",
