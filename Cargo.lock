@@ -6153,9 +6153,9 @@ dependencies = [
 
 [[package]]
 name = "workflow-rpc"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cce2b95c4387174931cf306fe5cbd9fe256ad38ef1190c9624fef5699ced787"
+checksum = "fcbfff11e7ffd0408c750070e18f3a9dc43a923ed17819721b6d469b181b875d"
 dependencies = [
  "ahash",
  "async-std",
