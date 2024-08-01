@@ -184,7 +184,7 @@ pub fn mint_token_demo(pubkey: &secp256k1::PublicKey) -> (Address, Vec<u8>) {
     (p2sh, script_sig)
 }
 
-pub fn payload_to_placeholder(payload: &Vec<u8>, pubkey: &secp256k1::PublicKey) -> Vec<u8> {
+pub fn payload_to_placeholder(payload: &[u8], pubkey: &secp256k1::PublicKey) -> Vec<u8> {
     let needle = &pubkey.serialize()[1..33];
 
     let position = payload
@@ -194,8 +194,11 @@ pub fn payload_to_placeholder(payload: &Vec<u8>, pubkey: &secp256k1::PublicKey) 
 
     let placeholder = "{{pubkey}}";
 
-    let mut result = payload.clone();
-    result.splice(position..position + needle.len(), placeholder.as_bytes().to_vec());
+    let mut result = payload.to_owned();
+    result.splice(
+        position..position + needle.len(),
+        placeholder.as_bytes().to_vec(),
+    );
     result
 }
 
@@ -336,6 +339,7 @@ pub fn reveal_transaction(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use faster_hex::hex_string;
     use kaspa_addresses::{Address, Prefix};
     use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
     use kaspa_consensus_core::hashing::sighash::SigHashReusedValues;
@@ -345,7 +349,6 @@ mod tests {
     use kaspa_txscript::SigCacheKey;
     use kaspa_txscript::TxScriptEngine;
     use kaspa_txscript_errors::TxScriptError;
-    use faster_hex::hex_string;
 
     fn print_script_sig(script_sig: &[u8]) {
         let mut step = 0;
