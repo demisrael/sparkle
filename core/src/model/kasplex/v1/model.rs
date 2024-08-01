@@ -149,7 +149,7 @@ pub mod krc20 {
     }
 
     #[serde_as]
-    #[derive(Debug, Deserialize)]
+    #[derive(Clone, Debug, Deserialize)]
     pub struct Token {
         pub tick: String,
         #[serde_as(as = "DisplayFromStr")]

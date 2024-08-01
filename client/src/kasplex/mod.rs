@@ -2,6 +2,7 @@ pub mod v1 {
 
     use crate::imports::*;
     use crate::result::Result;
+    use regex::Regex;
     use sparkle_core::model::kasplex::v1;
 
     struct Inner {
@@ -24,7 +25,10 @@ pub mod v1 {
             let response =
                 get_json::<v1::IndexerStatusResponse>(self.inner.url.join("/info")).await?;
 
-            if !response.message.starts_with("success") {
+            if !Regex::new(r"^(synced|unsynced)$")
+                .unwrap()
+                .is_match(&response.message)
+            {
                 Err(Error::IndexerError(response.message))
             } else {
                 Ok(response.result)
