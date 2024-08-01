@@ -24,7 +24,7 @@ pub mod v1 {
             let response =
                 get_json::<v1::IndexerStatusResponse>(self.inner.url.join("/info")).await?;
 
-            if response.message != "success" {
+            if !response.message.starts_with("success") {
                 Err(Error::IndexerError(response.message))
             } else {
                 Ok(response.result)
@@ -56,7 +56,7 @@ pub mod v1 {
                     result,
                 } = self.get_token_list_page(cursor).await?;
 
-                if message != "success" {
+                if !message.starts_with("success") {
                     return Err(Error::IndexerError(message));
                 }
 
@@ -87,7 +87,7 @@ pub mod v1 {
             // TODO: loop over paginated results
             let response = get_json::<v1::krc20::TokenBalanceListByAddressResponse>(url).await?;
 
-            if response.message != "success" {
+            if !response.message.starts_with("success") {
                 Err(Error::IndexerError(response.message))
             } else {
                 Ok(response.result)
@@ -105,7 +105,7 @@ pub mod v1 {
                 .join(format!("/krc20/address/{address}/token/{tick}"));
             let response = get_json::<v1::krc20::TokenBalanceResponse>(url).await?;
 
-            if response.message != "success" {
+            if response.message.starts_with("success") {
                 Err(Error::IndexerError(response.message))
             } else {
                 Ok(response.result)
