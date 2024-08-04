@@ -69,6 +69,7 @@ futures.workspace = true
 js-sys.workspace = true
 pad.workspace = true
 qrcode.workspace = true
+regex.workspace = true
 rpassword.workspace = true
 secp256k1.workspace = true
 serde_json.workspace = true
