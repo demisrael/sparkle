@@ -18,12 +18,14 @@ kaspa-consensus-client.workspace = true
 kaspa-notify.workspace = true
 kaspa-rpc-core.workspace = true
 kaspa-utils.workspace = true
-kaspa-wallet-core.workspace = true
 kaspa-wallet-keys.workspace = true
 kaspa-wrpc-client.workspace = true
 kaspa-hashes.workspace = true
 kaspa-txscript-errors.workspace = true
 kaspa-txscript.workspace = true
+# ---
+kaspa-wallet-core.workspace = true
+# ---
 
 workflow-core.workspace = true
 workflow-http.workspace = true
